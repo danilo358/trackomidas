@@ -13,8 +13,12 @@ export default function LoginPage() {
     e.preventDefault()
     await login(email, senha)
     const role = useAuthStore.getState().role
-    nav(state?.from || (role === 'RESTAURANTE' ? '/restaurante' : '/restaurantes'), { replace: true })
-  }
+    const destino =
+    role === 'RESTAURANTE' ? '/restaurante/pedidos'
+    : role === 'ENTREGADOR'  ? '/entregador/pedidos'
+    : '/restaurantes'
+    nav(state?.from || destino, { replace: true })
+    }
 
   return (
     <div className="app-shell grid place-items-center">

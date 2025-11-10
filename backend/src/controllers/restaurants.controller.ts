@@ -18,6 +18,19 @@ const upsertSchema = z.object({
   descricao: z.string().optional(),
 })
 
+export async function getMine(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  let doc = await Restaurant.findOne({ owner: req.user.id })
+  if (!doc && req.user.role === 'RESTAURANTE') {
+    doc = await Restaurant.create({
+      owner: req.user.id,
+      nome: `Restaurante ${req.user.nome?.split(' ')[0] ?? ''}`.trim() || 'Meu Restaurante'
+    })
+  }
+  if (!doc) return res.status(404).json({ error: 'Restaurante não encontrado para este usuário' })
+  return res.json(doc)
+}
+
 export async function upsertMine(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
   const parse = upsertSchema.safeParse(req.body)
@@ -28,13 +41,7 @@ export async function upsertMine(req: Request, res: Response) {
   return res.json(doc)
 }
 
-export async function getMine(req: Request, res: Response) {
-  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
-  const doc = await Restaurant.findOne({ owner: req.user.id })
-  if (!doc) return res.status(404).json({ error: 'Restaurante não encontrado para este usuário' })
-  return res.json(doc)
-}
-
+/** ENDEREÇOS */
 const addrSchema = z.object({
   apelido: z.string().min(1),
   cep: z.string().optional(),
@@ -56,9 +63,47 @@ export async function addAddress(req: Request, res: Response) {
     { new: true }
   )
   if (!doc) return res.status(404).json({ error: 'Restaurante não encontrado para este usuário' })
-  return res.json(doc)
+  return res.json(doc.enderecos)
 }
 
+export async function updateAddress(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const { id } = req.params
+  const parse = addrSchema.partial().safeParse(req.body)
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() })
+  const doc = await Restaurant.findOneAndUpdate(
+    { owner: req.user.id, 'enderecos._id': id },
+    {
+      $set: {
+        'enderecos.$.apelido': parse.data.apelido,
+        'enderecos.$.cep': parse.data.cep,
+        'enderecos.$.rua': parse.data.rua,
+        'enderecos.$.numero': parse.data.numero,
+        'enderecos.$.cidade': parse.data.cidade,
+        'enderecos.$.uf': parse.data.uf,
+        'enderecos.$.freteFixo': parse.data.freteFixo,
+        'enderecos.$.freteKm': parse.data.freteKm
+      }
+    },
+    { new: true }
+  )
+  if (!doc) return res.status(404).json({ error: 'Endereço não encontrado' })
+  return res.json(doc.enderecos)
+}
+
+export async function removeAddress(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const { id } = req.params
+  const doc = await Restaurant.findOneAndUpdate(
+    { owner: req.user.id },
+    { $pull: { enderecos: { _id: id } } },
+    { new: true }
+  )
+  if (!doc) return res.status(404).json({ error: 'Endereço não encontrado' })
+  return res.json(doc.enderecos)
+}
+
+/** CATEGORIAS */
 const catSchema = z.object({ nome: z.string().min(1) })
 
 export async function addCategory(req: Request, res: Response) {

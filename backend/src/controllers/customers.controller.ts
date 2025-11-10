@@ -41,3 +41,29 @@ export async function removeAddress(req: Request, res: Response) {
   ).select('enderecos')
   return res.json(u?.enderecos ?? [])
 }
+
+export async function updateAddress(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const id = req.params.id
+  const parsed = addrSchema.partial().safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const u = await User.findOneAndUpdate(
+    { _id: req.user.id, 'enderecos._id': id },
+    {
+      $set: {
+        'enderecos.$.apelido': parsed.data.apelido,
+        'enderecos.$.cep': parsed.data.cep,
+        'enderecos.$.rua': parsed.data.rua,
+        'enderecos.$.numero': parsed.data.numero,
+        'enderecos.$.bairro': parsed.data.bairro,
+        'enderecos.$.cidade': parsed.data.cidade,
+        'enderecos.$.uf': parsed.data.uf,
+        'enderecos.$.complemento': parsed.data.complemento
+      }
+    },
+    { new: true }
+  ).select('enderecos')
+
+  return res.json(u?.enderecos ?? [])
+}

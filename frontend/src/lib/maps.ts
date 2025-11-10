@@ -1,3 +1,5 @@
+import type { FeatureCollection, LineString, GeoJsonProperties } from 'geojson'
+
 export type LngLat = [number, number] // [lng, lat]
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string
@@ -39,4 +41,36 @@ export async function drivingDistanceKm(from: LngLat, to: LngLat): Promise<numbe
   }
   const meters = j.routes?.[0]?.distance ?? 0
   return meters / 1000
+}
+
+export async function drivingRoute(
+  from: LngLat,
+  to: LngLat
+): Promise<FeatureCollection<LineString, GeoJsonProperties>> {
+  const coords = `${from[0]},${from[1]};${to[0]},${to[1]}`
+  const url = new URL(`https://api.mapbox.com/directions/v5/mapbox/driving/${coords}`)
+  url.searchParams.set('access_token', MAPBOX_TOKEN)
+  url.searchParams.set('geometries', 'geojson')
+  url.searchParams.set('overview', 'full')
+
+  const r = await fetch(url.toString())
+  const j = await r.json() as {
+    routes?: { geometry?: { type: 'LineString', coordinates: [number, number][] } }[]
+  }
+
+  const geometry = j.routes?.[0]?.geometry
+  if (!geometry) {
+    return { type: 'FeatureCollection', features: [] }
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry
+      }
+    ]
+  }
 }

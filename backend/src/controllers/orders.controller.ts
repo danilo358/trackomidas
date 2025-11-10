@@ -16,7 +16,7 @@ export async function listMine(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
   const restId = await getRestaurantIdByOwner(req.user.id)
   if (!restId) return res.status(404).json({ error: 'Restaurante não encontrado' })
-  const docs = await Order.find({ restaurant: restId }).sort({ createdAt: -1 })
+  const docs = await Order.find({ restaurant: restId, archivedAt: null }).sort({ createdAt: -1 })
   return res.json(docs)
 }
 
@@ -102,5 +102,26 @@ export async function updateDriverLoc(req: Request, res: Response) {
   if (!o) return res.status(404).json({ error: 'Pedido não encontrado ou não atribuído' })
 
   getIO().emit('driver:loc', { orderId: o.id, loc: o.driverLoc }) // realtime
+  return res.json(o)
+}
+
+export async function listHistory(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const restId = await getRestaurantIdByOwner(req.user.id)
+  if (!restId) return res.status(404).json({ error: 'Restaurante não encontrado' })
+  const docs = await Order.find({ restaurant: restId, archivedAt: { $ne: null } }).sort({ archivedAt: -1 })
+  return res.json(docs)
+}
+
+export async function archive(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const restId = await getRestaurantIdByOwner(req.user.id)
+  if (!restId) return res.status(404).json({ error: 'Restaurante não encontrado' })
+  const o = await Order.findOneAndUpdate(
+    { _id: req.params.id, restaurant: restId },
+    { archivedAt: new Date() },
+    { new: true }
+  )
+  if (!o) return res.status(404).json({ error: 'Pedido não encontrado' })
   return res.json(o)
 }

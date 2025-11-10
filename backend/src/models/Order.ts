@@ -14,7 +14,8 @@ const OrderSchema = new Schema({
   status:     { type: String, enum: ['AGUARDANDO','EM_PREPARO','PRONTO','EM_ROTA','FECHADO'], default: 'AGUARDANDO' },
   entregador: { type: String },                 // nome exibido
   driverUserId: { type: Schema.Types.ObjectId, ref: 'User' }, // vínculo com o usuário ENTREGADOR
-  driverLoc:  { type: DriverLocSchema, default: null }
+  driverLoc:  { type: DriverLocSchema, default: null },
+  archivedAt: { type: Date, default: null }
 }, { timestamps: true })
 
 export type Order = InferSchemaType<typeof OrderSchema>

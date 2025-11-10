@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import User, { ROLES } from '../models/User'
+import User, { ROLES, type Role } from '../models/User'
+import Restaurant from '../models/Restaurant'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { ENV } from '../config/env'
@@ -48,12 +49,27 @@ export async function logout(_req: Request, res: Response) {
 }
 
 export async function setRole(req: Request, res: Response) {
-  const { id } = req.params
-  const body = z.object({ role: z.enum(ROLES) }).safeParse(req.body)
-  if (!body.success) return res.status(400).json({ error: body.error.flatten() })
-  const user = await User.findByIdAndUpdate(id, { role: body.data.role }, { new: true })
+  const schema = z.object({ role: z.enum(ROLES) })
+  const parsed = schema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const user = await User.findById(req.params.id)
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado' })
-  return res.json({ id: user.id, nome: user.nome, role: user.role })
+
+  const newRole: Role = parsed.data.role
+  user.role = newRole
+  await user.save()
+
+  // Se virou RESTAURANTE, garante o documento do restaurante
+  if (newRole === 'RESTAURANTE') {
+    await Restaurant.findOneAndUpdate(
+      { owner: user.id },
+      { $setOnInsert: { owner: user.id, nome: user.nome || `Meu Restaurante` } },
+      { upsert: true, new: true }
+    )
+  }
+
+  return res.json({ ok: true, user: { id: user.id, nome: user.nome, role: user.role } })
 }
 
 function cookieOptions() {

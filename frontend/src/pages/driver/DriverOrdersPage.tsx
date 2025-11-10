@@ -11,22 +11,24 @@ type Pedido = {
 
 export default function DriverOrdersPage(){
   const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [selectedId, setSelectedId] = useState<string>('')
   const [tracking, setTracking] = useState<boolean>(false)
   const watchId = useRef<number | null>(null)
 
   useEffect(() => {
     api.get('/orders/driver').then(r => setPedidos(r.data as Pedido[]))
     const s = socketIO('http://localhost:3333', { withCredentials: true })
-    s.on('order:new', () => { /* opcional: refresh */ })
     return () => { s.close() }
   }, [])
 
   async function sendLoc(coords: GeolocationCoordinates){
-    await api.patch(`/orders/driver/${pedidos[0]?._id}/loc`, { lng: coords.longitude, lat: coords.latitude })
+    if (!selectedId) return
+    await api.patch(`/orders/driver/${selectedId}/loc`, { lng: coords.longitude, lat: coords.latitude })
   }
 
   function start(){
     if (!navigator.geolocation) { alert('Geolocalização não suportada'); return }
+    if (!selectedId) { alert('Selecione um pedido para rastrear'); return }
     if (tracking) return
     setTracking(true)
     watchId.current = navigator.geolocation.watchPosition(
@@ -48,18 +50,19 @@ export default function DriverOrdersPage(){
         <h2 className="text-xl font-semibold">Meus Pedidos</h2>
         <div className="flex gap-2">
           {!tracking
-            ? <button className="btn-primary" onClick={start}>Iniciar compartilhamento</button>
-            : <button className="btn-ghost" onClick={stop}>Parar compartilhamento</button>
+            ? <button className="btn-primary" onClick={start} disabled={!selectedId}>Iniciar</button>
+            : <button className="btn-ghost" onClick={stop}>Parar</button>
           }
         </div>
       </header>
       <div className="grid gap-2">
         {pedidos.map(p => (
           <article key={p._id} className="card flex items-center justify-between">
-            <div>
-              <p className="font-semibold">Pedido #{p._id}</p>
-              <p className="text-sm opacity-70">Status: {p.status} • Total: R$ {p.total.toFixed(2)}</p>
-            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="radio" name="pedido" value={p._id} checked={selectedId===p._id} onChange={()=>setSelectedId(p._id)} />
+              <span className="font-semibold">#{p._id}</span>
+              <span className="opacity-70">Status: {p.status} • Total: R$ {p.total.toFixed(2)}</span>
+            </label>
           </article>
         ))}
         {pedidos.length===0 && <p className="text-sm opacity-60">Nenhum pedido atribuído.</p>}

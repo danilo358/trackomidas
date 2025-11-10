@@ -3,6 +3,7 @@ import api from '../../lib/api'
 import { useCart } from '../../stores/cart'
 import { Link } from 'react-router-dom'
 import { geocodeAddress, drivingDistanceKm, type LngLat } from '../../lib/maps'
+import GLMap from '../../components/maps/GLMap'
 
 type Address = {
   _id: string
@@ -96,58 +97,55 @@ export default function CartPage(){
         </ul>
       </div>
 
-      <div className="card grid gap-3">
-        <h3 className="font-semibold">Entrega</h3>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="label">Endereço:</label>
-          <select className="input max-w-xs" value={selectedAddr} onChange={e=>setSelectedAddr(e.target.value)}>
-            <option value="">Selecione…</option>
-            {addresses.map(a => <option key={a._id} value={a._id}>{a.apelido}</option>)}
-          </select>
-          <Link to="/cliente/enderecos" className="btn-ghost text-sm">Gerenciar endereços</Link>
-        </div>
-        <div className="grid gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="label">Endereço:</label>
-            <select className="input max-w-xs" value={selectedAddr} onChange={async e=>{
-            const id = e.target.value
-            setSelectedAddr(id)
-            const a = addresses.find(x=>x._id===id)
-            const str = [a?.rua, a?.numero, a?.bairro, a?.cidade && `${a.cidade}/${a.uf}`].filter(Boolean).join(', ')
-            if (str) {
-                const c = await geocodeAddress(str)
-                setAddrCoord(c)
-            }
-            }}>
-            <option value="">Selecione…</option>
-            {addresses.map(a => <option key={a._id} value={a._id}>{a.apelido}</option>)}
-            </select>
-            <Link to="/cliente/enderecos" className="btn-ghost text-sm">Gerenciar endereços</Link>
+        <div className="card grid gap-3">
+            <h3 className="font-semibold">Entrega</h3>
+
+            <div className="flex flex-wrap items-center gap-2">
+                <label className="label">Endereço:</label>
+                <select className="input max-w-xs" value={selectedAddr} onChange={async e=>{
+                const id = e.target.value
+                setSelectedAddr(id)
+                const a = addresses.find(x=>x._id===id)
+                const str = [a?.rua, a?.numero, a?.bairro, a?.cidade && `${a.cidade}/${a.uf}`].filter(Boolean).join(', ')
+                if (str) {
+                    const c = await geocodeAddress(str)
+                    setAddrCoord(c)
+                }
+                }}>
+                <option value="">Selecione…</option>
+                {addresses.map(a => <option key={a._id} value={a._id}>{a.apelido}</option>)}
+                </select>
+                <Link to="/cliente/enderecos" className="btn-ghost text-sm">Gerenciar endereços</Link>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+                <label className="label">Distância (km):</label>
+                <input className="input w-32" type="number" min={0} step={0.1} value={distanceKm} readOnly />
+                <button
+                className="btn-ghost text-sm"
+                disabled={!restCoord || !addrCoord || loadingDist}
+                onClick={async ()=>{
+                    if (!restCoord || !addrCoord) return
+                    setLoadingDist(true)
+                    try {
+                    const km = await drivingDistanceKm(restCoord, addrCoord)
+                    setDistance(Number(km.toFixed(2)))
+                    } finally { setLoadingDist(false) }
+                }}
+                >
+                {loadingDist ? 'Calculando…' : 'Calcular distância'}
+                </button>
+                <span className="text-sm opacity-70">R$ {freteFixo.toFixed(2)} + R$ {freteKm.toFixed(2)} × km</span>
+            </div>
+
+            {/* Mapa interativo (abaixo adicionaremos o componente GLMap) */}
+            {restCoord && addrCoord && (
+                <div className="h-64 rounded-xl overflow-hidden border border-white/10">
+                <GLMap from={restCoord} to={addrCoord} />
+                </div>
+            )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-            <label className="label">Distância (km):</label>
-            <input className="input w-32" type="number" min={0} step={0.1} value={distanceKm} readOnly />
-            <button
-            className="btn-ghost text-sm"
-            disabled={!restCoord || !addrCoord || loadingDist}
-            onClick={async ()=>{
-                if (!restCoord || !addrCoord) return
-                setLoadingDist(true)
-                try {
-                const km = await drivingDistanceKm(restCoord, addrCoord)
-                setDistance(Number(km.toFixed(2)))
-                } finally {
-                setLoadingDist(false)
-                }
-            }}
-            >
-            {loadingDist ? 'Calculando…' : 'Calcular distância'}
-            </button>
-            <span className="text-sm opacity-70">Cálculo: R$ {freteFixo.toFixed(2)} + R$ {freteKm.toFixed(2)} × km</span>
-        </div>
-        </div>
-      </div>
 
       <div className="card flex items-center justify-between">
         <div className="text-sm opacity-80">Subtotal: R$ {subtotal.toFixed(2)} • Frete: R$ {frete.toFixed(2)}</div>
