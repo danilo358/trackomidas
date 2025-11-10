@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Bell, Clock, CheckCheck, Bike, ChefHat, Archive } from 'lucide-react'
+import { Bell, Clock, CheckCheck, Bike, ChefHat } from 'lucide-react'
 import GLMap from '../../../components/maps/GLMap'
 import api from '../../../lib/api'
 import { io as socketIO } from 'socket.io-client'
@@ -33,7 +33,6 @@ function msLeft(p: Pedido, nowValue: number) {
 export default function OrdersPage() {
   
   const [pedidos, setPedidos] = useState<Pedido[]>(inicial)
-  const [historico, setHistorico] = useState<Pedido[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const scheduled = useRef<Set<string>>(new Set())
   const [now, setNow] = useState<number>(Date.now())
@@ -45,7 +44,6 @@ export default function OrdersPage() {
   useEffect(() => {
     // carrega pedidos do backend
     api.get('/orders/me').then(r => setPedidos(r.data as Pedido[])).catch(()=>setPedidos([]))
-    api.get('/orders/me/history').then(r => setHistorico(r.data as Pedido[])).catch(()=>setHistorico([]))
 
     // socket realtime
     const socket = socketIO('http://localhost:3333', { withCredentials: true })
@@ -66,10 +64,8 @@ export default function OrdersPage() {
         scheduled.current.add(p._id)
         setTimeout(async () => {
           try {
-            const r = await api.patch(`/orders/me/${p._id}/archive`)
-            const arquivado = r.data as Pedido
+            await api.patch(`/orders/me/${p._id}/archive`)
             setPedidos(prev => prev.filter(x => x._id !== p._id))
-            setHistorico(prev => [arquivado, ...prev])
           } finally {
             scheduled.current.delete(p._id)
           }
@@ -104,7 +100,6 @@ export default function OrdersPage() {
       <Col title="Pronto" icon={<CheckCheck className="size-4" />} cards={grupos.PRONTO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
       <Col title="Em Rota" icon={<Bike className="size-4" />} cards={grupos.EM_ROTA} onNext={avancarStatus} onReplace={replacePedido} now={now} />
       <Col title="Fechado" icon={<Clock className="size-4" />} cards={grupos.FECHADO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
-      <ColHistory title="Histórico" icon={<Archive className="size-4" />} cards={historico} />
     </div>
   )
 }
@@ -172,29 +167,6 @@ function Col({ title, icon, cards, onNext, onReplace, now }:{ title:string; icon
           </article>
         ))}
         {cards.length===0 && <p className="text-sm opacity-60">Sem pedidos neste estágio.</p>}
-      </div>
-    </section>
-  )
-}
-
-function ColHistory({ title, icon, cards }:{ title:string; icon:ReactNode; cards:Pedido[] }){
-  return (
-    <section className="card">
-      <header className="flex items-center gap-2 mb-3"><span>{icon}</span><h3 className="font-semibold">{title}</h3></header>
-      <div className="grid gap-3">
-        {cards.map(c => (
-          <article key={c._id} className="rounded-xl p-3 bg-white/5">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold">Pedido #{c._id}</h4>
-              <span className="text-sm opacity-70">R$ {c.total.toFixed(2)}</span>
-            </div>
-            <p className="text-sm opacity-80">{c.entregador ? `Entregador: ${c.entregador}` : '—'}</p>
-            <ul className="text-sm opacity-80 list-disc pl-5">
-              {c.itens.map((i,idx)=>(<li key={idx}>{i.qtd}× {i.nome}</li>))}
-            </ul>
-          </article>
-        ))}
-        {cards.length===0 && <p className="text-sm opacity-60">Nada no histórico ainda.</p>}
       </div>
     </section>
   )

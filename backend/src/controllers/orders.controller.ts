@@ -3,6 +3,7 @@ import { z } from 'zod'
 import Order from '../models/Order'
 import Restaurant from '../models/Restaurant'
 import { getIO } from '../realtime/io'
+import User from '../models/User'
 
 type Id = string
 
@@ -117,7 +118,47 @@ export async function listHistory(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
   const restId = await getRestaurantIdByOwner(req.user.id)
   if (!restId) return res.status(404).json({ error: 'Restaurante não encontrado' })
-  const docs = await Order.find({ restaurant: restId, archivedAt: { $ne: null } }).sort({ archivedAt: -1 })
+
+  const { q, minTotal, maxTotal, start, end } = req.query as {
+    q?: string; minTotal?: string; maxTotal?: string; start?: string; end?: string
+  }
+
+  const filter: Record<string, unknown> = {
+    restaurant: restId,
+    archivedAt: { $ne: null },
+  }
+
+  // faixa de valores (total)
+  if (minTotal || maxTotal) {
+    filter.total = {}
+    if (minTotal) (filter.total as any).$gte = Number(minTotal)
+    if (maxTotal) (filter.total as any).$lte = Number(maxTotal)
+  }
+
+  // faixa de datas (por closedAt; se não houver, usa createdAt)
+  if (start || end) {
+    const dt: Record<string, Date> = {}
+    if (start) dt.$gte = new Date(start)
+    if (end)   dt.$lte = new Date(end)
+    filter.$or = [
+      { closedAt: dt },
+      { $and: [{ closedAt: { $exists: false } }, { createdAt: dt }] }
+    ]
+  }
+
+  // filtro por cliente (nome/email) se q vier
+  if (q && q.trim()) {
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+    const users = await User.find({ $or: [{ nome: rx }, { email: rx }] }).select('_id')
+    const ids = users.map(u => u._id)
+    filter.cliente = { $in: ids.length ? ids : ['__no_match__'] }
+  }
+
+  const docs = await Order
+    .find(filter)
+    .sort({ archivedAt: -1 })
+    .populate('cliente', 'nome email') // para exibir no front
+
   return res.json(docs)
 }
 

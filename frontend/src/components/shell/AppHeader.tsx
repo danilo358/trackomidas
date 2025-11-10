@@ -34,6 +34,7 @@ export default function AppHeader(){
           {(role === 'RESTAURANTE' || role === 'ADMIN') && (
             <>
               {link('/restaurante/pedidos', 'Pedidos')}
+              {link('/restaurante/historico', 'Histórico')}
               {link('/restaurante/itens', 'Itens')}
               {link('/restaurante/categorias', 'Categorias')}
               {link('/restaurante/enderecos', 'Endereços')}

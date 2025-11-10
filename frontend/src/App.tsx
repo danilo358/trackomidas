@@ -18,6 +18,7 @@ import DriverLayout from './pages/driver/DriverLayout'
 import DriverOrdersPage from './pages/driver/DriverOrdersPage'
 import RoleGate from './auth/RoleGate'
 import { useAuthStore } from './stores/auth'
+import HistoryPage from './pages/restaurants/HistoryPage'
 
 export default function App() {
   const role = useAuthStore(s => s.role)
@@ -37,16 +38,17 @@ export default function App() {
       <Route
         path="/restaurante/*"
         element={
-          <RoleGate allow={["RESTAURANTE"]}>
+          <RoleGate allow={['RESTAURANTE','ADMIN']}>
             <RestaurantLayout />
           </RoleGate>
         }
       >
         <Route index element={<Navigate to="pedidos" replace />} />
-        <Route path="pedidos" element={<OrdersPage />} />
-        <Route path="itens" element={<ItemsPage />} />
-        <Route path="categorias" element={<CategoriesPage />} />
-        <Route path="enderecos" element={<AddressesPage />} />
+        <Route path="pedidos" element={<RoleGate allow={['RESTAURANTE','ADMIN']}><OrdersPage/></RoleGate>} />
+        <Route path="historico" element={<RoleGate allow={['RESTAURANTE','ADMIN']}><HistoryPage/></RoleGate>} />
+        <Route path="itens" element={<RoleGate allow={['RESTAURANTE','ADMIN']}><ItemsPage/></RoleGate>} />
+        <Route path="categorias" element={<RoleGate allow={['RESTAURANTE','ADMIN']}><CategoriesPage/></RoleGate>} />
+        <Route path="enderecos" element={<RoleGate allow={['RESTAURANTE','ADMIN']}><AddressesPage/></RoleGate>} />
         <Route path="avaliacoes" element={<ReviewsPage />} />
       </Route>
 
@@ -59,7 +61,6 @@ export default function App() {
           </RoleGate>
         }
       >
-        <Route index element={<Navigate to="enderecos" replace />} />
         <Route index element={<Navigate to="restaurantes" replace />} />
         <Route path="enderecos" element={<ClientAddresses />} />
         <Route path="pedidos" element={<ClientOrdersPage />} />

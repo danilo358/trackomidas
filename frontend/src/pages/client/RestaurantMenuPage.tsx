@@ -60,7 +60,7 @@ export default function RestaurantMenuPage(){
             {c.nome}
           </button>
           {expanded[c._id] && (
-            <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {(itemsByCat[c._id] ?? []).map(i => (
                 <article key={i._id} className="rounded-xl p-3 bg-white/5">
                   {i.driveId ? <GoogleDriveImage id={i.driveId} title={i.nome}/> : <div className="aspect-square rounded-xl bg-white/5" />}
