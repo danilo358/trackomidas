@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-500: oklch(0.72 0.14 254);
+  --color-brand-600: oklch(0.62 0.14 254);
+  --color-brand-700: oklch(0.54 0.13 254);
+  --color-ink-900:  oklch(0.18 0.01 250);
+}
+
+:root { color-scheme: dark; }
+
+/* Shell base */
+.app-shell { @apply min-h-dvh bg-ink-900 text-white; }
+.card { @apply rounded-2xl p-4 shadow-lg bg-black/30 border border-white/5; }
+.btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition; }
+.btn-primary { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition bg-brand-600 hover:bg-brand-700; }
+.btn-ghost { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition bg-white/5 hover:bg-white/10; }
+.input { @apply w-full rounded-xl bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-brand-600; }
+.label { @apply text-sm opacity-80; }
+
+/* Fundo animado para a tela de login (gradiente orgânico) */
+.login-bg {
+  position: fixed; inset: 0; overflow: hidden; pointer-events: none;
+  background: radial-gradient(60vmax 60vmax at 10% 20%, color(display-p3 0.22 0.28 0.96) 0%, transparent 60%),
+              radial-gradient(60vmax 60vmax at 80% 10%, color(display-p3 0.02 0.02 0.10) 0%, transparent 50%),
+              radial-gradient(60vmax 60vmax at 90% 80%, color(display-p3 0.18 0.14 0.70) 0%, transparent 50%);
+  filter: blur(40px) saturate(120%);
+}
