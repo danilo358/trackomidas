@@ -4,6 +4,7 @@ import GLMap from '../../../components/maps/GLMap'
 import api from '../../../lib/api'
 import { io as socketIO } from 'socket.io-client'
 import AssignDriver from '../../../components/AssignDriver'
+import { drivingDistanceKm } from '../../../lib/maps'
 
 type Status = 'AGUARDANDO' | 'EM_PREPARO' | 'PRONTO' | 'EM_ROTA' | 'FECHADO'
 
@@ -16,6 +17,7 @@ type Pedido = {
   driverLoc?: { lng: number; lat: number; ts: string }
   archivedAt?: string | null
   closedAt?: string | null
+  dest?: { lng:number; lat:number; label?:string }
 }
 
 const inicial: Pedido[] = []
@@ -128,9 +130,16 @@ function Col({ title, icon, cards, onNext, onReplace, now }:{ title:string; icon
             </div>
             <div className="grid gap-2">
               <p className="text-sm opacity-80">{c.entregador ? `Entregador: ${c.entregador}` : '—'}</p>
-              {c.status==='EM_ROTA' && c.driverLoc && (
-                <div className="h-52 rounded-xl overflow-hidden border border-white/10">
-                  <GLMap from={[c.driverLoc.lng, c.driverLoc.lat]} to={[c.driverLoc.lng, c.driverLoc.lat]} />
+              {c.status==='EM_ROTA' && c.driverLoc && c.dest && (
+                <div className="grid gap-2">
+                  <div className="h-52 rounded-xl overflow-hidden border border-white/10">
+                    <GLMap
+                      from={[c.driverLoc.lng, c.driverLoc.lat]}
+                      to={[c.dest.lng, c.dest.lat]}
+                      followFrom
+                    />
+                  </div>
+                  <Remaining from={[c.driverLoc.lng, c.driverLoc.lat]} to={[c.dest.lng, c.dest.lat]} />
                 </div>
               )}
             </div>
@@ -188,5 +197,25 @@ function ColHistory({ title, icon, cards }:{ title:string; icon:ReactNode; cards
         {cards.length===0 && <p className="text-sm opacity-60">Nada no histórico ainda.</p>}
       </div>
     </section>
+  )
+}
+
+function Remaining({ from, to }:{ from:[number,number]; to:[number,number] }) {
+  const [km, setKm] = useState<number | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const d = await drivingDistanceKm(from, to)
+      if (alive) setKm(Number(d.toFixed(1)))
+    })()
+    return () => { alive = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from[0], from[1], to[0], to[1]])
+
+  return (
+    <span className="text-xs opacity-70">
+      {km === null ? 'Calculando rota…' : `Falta ${km} km`}
+    </span>
   )
 }
