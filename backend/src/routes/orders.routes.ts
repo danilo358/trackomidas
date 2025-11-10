@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { create, listForDriver, listMine, nextStatus, setDriver, updateDriverLoc, listHistory, archive, listForCustomer} from '../controllers/orders.controller'
+import { create, listForDriver, listMine, nextStatus, setDriver, updateDriverLoc, listHistory, archive, listForCustomer, rateMyOrder, listMyReviews } from '../controllers/orders.controller'
 import { requireAuth, requireRole } from '../middlewares/auth'
 
 const r = Router()
@@ -14,6 +14,10 @@ r.patch('/me/:id/next', requireAuth, requireRole(['RESTAURANTE','ADMIN']), nextS
 r.patch('/me/:id/driver', requireAuth, requireRole(['RESTAURANTE','ADMIN']), setDriver)
 r.get('/me/history', requireAuth, requireRole(['RESTAURANTE','ADMIN']), listHistory)
 r.patch('/me/:id/archive', requireAuth, requireRole(['RESTAURANTE','ADMIN']), archive)
+
+//avaliações
+r.patch('/my/:id/rate', requireAuth, requireRole(['CLIENTE','ADMIN']), rateMyOrder)
+r.get('/me/reviews', requireAuth, requireRole(['RESTAURANTE','ADMIN']), listMyReviews)
 
 // entregador
 r.get('/driver', requireAuth, requireRole(['ENTREGADOR','ADMIN']), listForDriver)

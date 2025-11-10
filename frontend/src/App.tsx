@@ -19,6 +19,8 @@ import DriverOrdersPage from './pages/driver/DriverOrdersPage'
 import RoleGate from './auth/RoleGate'
 import { useAuthStore } from './stores/auth'
 import HistoryPage from './pages/restaurants/HistoryPage'
+import UsersPage from './pages/admin/UsersPage'
+
 
 export default function App() {
   const role = useAuthStore(s => s.role)
@@ -80,6 +82,8 @@ export default function App() {
         <Route index element={<Navigate to="pedidos" replace />} />
         <Route path="pedidos" element={<DriverOrdersPage />} />
       </Route>
+
+      <Route path="/admin/usuarios" element={<RoleGate allow={['ADMIN']}><UsersPage/></RoleGate>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to={role ? '/restaurante' : '/restaurantes'} replace />} />

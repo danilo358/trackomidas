@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import api from '../../../lib/api'
+import { extractDriveId, toDrivePreview } from '../../../lib/drive'
 
 type Address = {
   _id: string
@@ -8,10 +9,25 @@ type Address = {
   cep?: string
   rua?: string
   numero?: string
+  bairro?: string
   cidade?: string
   uf?: string
   freteFixo: number
   freteKm: number
+  logoId?: string
+}
+
+type FormState = {
+  apelido: string
+  cep: string
+  rua: string
+  numero: string
+  bairro: string
+  cidade: string
+  uf: string
+  freteFixo: number
+  freteKm: number
+  logoInput: string
 }
 
 type RestaurantMine = {
@@ -21,16 +37,13 @@ type RestaurantMine = {
 
 export default function AddressesPage(){
   const [enderecos, setEnderecos] = useState<Address[]>([])
-  const [form, setForm] = useState<Omit<Address,'_id'>>({
-    apelido: '',
-    cep: '',
-    rua: '',
-    numero: '',
-    cidade: '',
-    uf: '',
-    freteFixo: 0,
-    freteKm: 0
+  const [form, setForm] = useState<FormState>({
+    apelido: 'Matriz',
+    cep: '', rua: '', numero: '', bairro: '', cidade: '', uf: '',
+    freteFixo: 0, freteKm: 0,
+    logoInput: ''
   })
+  const logoPreview = useMemo(() => toDrivePreview(form.logoInput), [form.logoInput])
   const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -40,35 +53,50 @@ export default function AddressesPage(){
     })
   }, [])
 
-  function onChange<K extends keyof Omit<Address,'_id'>>(k: K, v: Omit<Address,'_id'>[K]){
+  function onChange<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm(prev => ({ ...prev, [k]: v }))
   }
 
   async function salvar(){
     if (editingId) {
       const r = await api.patch(`/restaurants/me/addresses/${editingId}`, {
-        ...form,
+        apelido: form.apelido,
+        cep: form.cep, rua: form.rua, numero: form.numero, bairro: form.bairro,
+        cidade: form.cidade, uf: form.uf,
         freteFixo: Number(form.freteFixo ?? 0),
         freteKm: Number(form.freteKm ?? 0),
+        logoId: extractDriveId(form.logoInput)
       })
       setEnderecos(r.data as Address[])
       setEditingId(null)
     } else {
       const r = await api.post('/restaurants/me/addresses', {
-        ...form,
-        freteFixo: Number(form.freteFixo ?? 0),
-        freteKm: Number(form.freteKm ?? 0),
+        apelido: form.apelido,
+        cep: form.cep, rua: form.rua, numero: form.numero, bairro: form.bairro,
+        cidade: form.cidade, uf: form.uf, freteFixo: form.freteFixo, freteKm: form.freteKm,
+        logoId: extractDriveId(form.logoInput)
       })
       setEnderecos(r.data as Address[])
     }
-    setForm({ apelido:'', cep:'', rua:'', numero:'', cidade:'', uf:'', freteFixo:0, freteKm:0 })
+    setForm({ apelido:'Matriz', cep:'', rua:'', numero:'', bairro:'', cidade:'', uf:'', freteFixo:0, freteKm:0, logoInput:'' })
   }
 
   async function editar(id: string){
     const e = enderecos.find(x=>x._id===id)
     if (!e) return
     setEditingId(id)
-    setForm({ apelido:e.apelido, cep:e.cep, rua:e.rua, numero:e.numero, cidade:e.cidade, uf:e.uf, freteFixo:e.freteFixo, freteKm:e.freteKm })
+    setForm({
+      apelido: e.apelido,
+      cep: e.cep ?? '',
+      rua: e.rua ?? '',
+      numero: e.numero ?? '',
+      bairro: e.bairro ?? '',
+      cidade: e.cidade ?? '',
+      uf: e.uf ?? '',
+      freteFixo: e.freteFixo,
+      freteKm: e.freteKm,
+      logoInput: e.logoId ?? ''
+    })
   }
 
   async function remover(id: string){
@@ -78,7 +106,7 @@ export default function AddressesPage(){
     setEnderecos(r.data as Address[])
     if (editingId === id) {
       setEditingId(null)
-      setForm({ apelido:'', cep:'', rua:'', numero:'', cidade:'', uf:'', freteFixo:0, freteKm:0 })
+      setForm({ apelido:'Matriz', cep:'', rua:'', numero:'', bairro:'', cidade:'', uf:'', freteFixo:0, freteKm:0, logoInput:'' })
     }
   }
 
@@ -123,10 +151,30 @@ export default function AddressesPage(){
             <label className="label">Valor por km (R$)</label>
             <input className="input" type="number" min={0} step={0.01} value={form.freteKm} onChange={e=>onChange('freteKm', Number(e.target.value))} />
           </div>
+          <label className="label">Logo (link ou ID do Google Drive)</label>
+          <input
+            className="input"
+            placeholder="Cole o link do Google Drive ou o ID"
+            value={form.logoInput}
+            onChange={e => setForm(f => ({ ...f, logoInput: e.target.value }))}
+          />
+
+          <div className="mt-2 h-24 rounded-xl overflow-hidden border border-white/10">
+            {logoPreview ? (
+              <iframe
+                className="w-full h-full"
+                src={logoPreview}
+                loading="lazy"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            ) : (
+              <p className="text-xs opacity-60 p-2">A prévia da logo aparecerá aqui.</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <button className="btn-primary" onClick={salvar}>{editingId ? 'Salvar alteração' : 'Adicionar'}</button>
-          {editingId && <button className="btn-ghost" onClick={()=>{ setEditingId(null); setForm({ apelido:'', cep:'', rua:'', numero:'', cidade:'', uf:'', freteFixo:0, freteKm:0 }) }}>Cancelar</button>}
+          {editingId && <button className="btn-ghost" onClick={()=>{ setEditingId(null); setForm({ apelido:'Matriz', cep:'', rua:'', numero:'', bairro:'', cidade:'', uf:'', freteFixo:0, freteKm:0, logoInput:'' }) }}>Cancelar</button>}
         </div>
       </div>
 

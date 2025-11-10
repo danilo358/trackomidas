@@ -43,6 +43,7 @@ export async function create(req: Request, res: Response) {
     dest: dest ? { ...dest } : undefined
   })
   getIO().emit('order:new', order)
+  await Restaurant.findByIdAndUpdate(restaurantId, { $inc: { ordersCount: 1 } })
   return res.status(201).json(order)
 }
 
@@ -179,4 +180,42 @@ export async function listForCustomer(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
   const docs = await Order.find({ cliente: req.user.id }).sort({ createdAt: -1 })
   return res.json(docs)
+}
+
+//cliente Avaliações
+const rateSchema = z.object({ nota: z.number().min(1).max(5), comentario: z.string().max(1000).optional() })
+
+export async function rateMyOrder(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const { id } = req.params
+  const parsed = rateSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const o = await Order.findOne({ _id: id, cliente: req.user.id })
+  if (!o) return res.status(404).json({ error: 'Pedido não encontrado' })
+  if (o.status !== 'FECHADO') return res.status(400).json({ error: 'Só é possível avaliar pedidos FECHADOS' })
+  if (o.ratedAt) return res.status(400).json({ error: 'Pedido já avaliado' })
+
+  o.rating = { nota: parsed.data.nota, comentario: parsed.data.comentario ?? '' }
+  o.ratedAt = new Date()
+  await o.save()
+
+  await Restaurant.findByIdAndUpdate(o.restaurant, {
+    $inc: { ratingsCount: 1, ratingsSum: parsed.data.nota }
+  })
+
+  res.json(o)
+}
+
+export async function listMyReviews(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const restId = await getRestaurantIdByOwner(req.user.id)
+  if (!restId) return res.status(404).json({ error: 'Restaurante não encontrado' })
+
+  const docs = await Order.find({ restaurant: restId, ratedAt: { $ne: null } })
+    .select('rating ratedAt cliente itens total')
+    .populate('cliente', 'nome email')
+    .sort({ ratedAt: -1 })
+
+  res.json(docs)
 }

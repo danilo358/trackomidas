@@ -2,15 +2,26 @@ import { Request, Response } from 'express'
 import { z } from 'zod'
 import Restaurant from '../models/Restaurant'
 
+function serializeRestaurant(doc: any) {
+  const json = typeof doc.toJSON === 'function' ? doc.toJSON() : doc
+  const ratingsCount = Number(json.ratingsCount ?? 0)
+  const ratingsSum   = Number(json.ratingsSum   ?? 0)
+  const ordersCount  = Number(json.ordersCount  ?? 0)
+  const ratingAvg    = ratingsCount ? (ratingsSum / ratingsCount) : 0
+  return { ...json, ratingAvg, ratingCount: ratingsCount, ordersCount }
+}
+
 export async function listPublic(_req: Request, res: Response) {
-  const docs = await Restaurant.find().select('nome ratingAvg ratingCount categorias enderecos')
-  return res.json(docs)
+  const docs = await Restaurant
+    .find(/* seu filtro aqui */)
+    .select('+ratingsSum +ratingsCount +ordersCount nome categorias enderecos')
+  return res.json(docs.map(serializeRestaurant))
 }
 
 export async function getOne(req: Request, res: Response) {
   const doc = await Restaurant.findById(req.params.id)
   if (!doc) return res.status(404).json({ error: 'Não encontrado' })
-  return res.json(doc)
+  return res.json(serializeRestaurant(doc))
 }
 
 const upsertSchema = z.object({
@@ -28,7 +39,7 @@ export async function getMine(req: Request, res: Response) {
     })
   }
   if (!doc) return res.status(404).json({ error: 'Restaurante não encontrado para este usuário' })
-  return res.json(doc)
+  return res.json(serializeRestaurant(doc))
 }
 
 export async function upsertMine(req: Request, res: Response) {
@@ -50,7 +61,8 @@ const addrSchema = z.object({
   cidade: z.string().optional(),
   uf: z.string().optional(),
   freteFixo: z.number().nonnegative().default(0),
-  freteKm: z.number().nonnegative().default(0)
+  freteKm: z.number().nonnegative().default(0),
+  logoId: z.string().optional()
 })
 
 export async function addAddress(req: Request, res: Response) {
@@ -82,7 +94,8 @@ export async function updateAddress(req: Request, res: Response) {
         'enderecos.$.cidade': parse.data.cidade,
         'enderecos.$.uf': parse.data.uf,
         'enderecos.$.freteFixo': parse.data.freteFixo,
-        'enderecos.$.freteKm': parse.data.freteKm
+        'enderecos.$.freteKm': parse.data.freteKm,
+        'enderecos.$.logoId': parse.data.logoId
       }
     },
     { new: true }

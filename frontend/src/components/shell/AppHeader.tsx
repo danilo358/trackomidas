@@ -22,7 +22,7 @@ export default function AppHeader(){
         </div>
         <nav className="hidden md:flex items-center gap-1">
           {/* CLIENTE */}
-          {(role === 'CLIENTE' || role === 'ADMIN') && (
+          {(role === 'CLIENTE') && (
             <>
               {link('/restaurantes', 'Restaurantes')}
               {link('/cliente/pedidos', 'Meus pedidos')}
@@ -31,19 +31,26 @@ export default function AppHeader(){
             </>
           )}
           {/* RESTAURANTE */}
-          {(role === 'RESTAURANTE' || role === 'ADMIN') && (
+          {(role === 'RESTAURANTE') && (
             <>
               {link('/restaurante/pedidos', 'Pedidos')}
               {link('/restaurante/historico', 'Histórico')}
               {link('/restaurante/itens', 'Itens')}
               {link('/restaurante/categorias', 'Categorias')}
               {link('/restaurante/enderecos', 'Endereços')}
+              {link('/restaurante/avaliacoes', 'Avaliações')}
             </>
           )}
           {/* ENTREGADOR */}
-          {(role === 'ENTREGADOR' || role === 'ADMIN') && (
+          {(role === 'ENTREGADOR') && (
             <>
               {link('/entregador/pedidos', 'Entregas')}
+            </>
+          )}
+          {/* ADMIN */}
+          {role === 'ADMIN' && (
+            <>
+              {link('/admin/usuarios', 'Usuários')}
             </>
           )}
         </nav>

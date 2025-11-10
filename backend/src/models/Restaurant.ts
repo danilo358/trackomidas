@@ -8,7 +8,8 @@ const AddressSchema = new Schema({
   cidade: String,
   uf: String,
   freteFixo: { type: Number, default: 0 },
-  freteKm: { type: Number, default: 0 }
+  freteKm: { type: Number, default: 0 },
+  logoId: { type: String, default: '' }
 }, { _id: true })
 
 const CategorySchema = new Schema({
@@ -22,7 +23,10 @@ const RestaurantSchema = new Schema({
   ratingAvg: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
   enderecos: [AddressSchema],
-  categorias: [CategorySchema]
+  categorias: [CategorySchema],
+  ratingsCount: { type: Number, default: 0 },
+  ratingsSum:   { type: Number, default: 0 },
+  ordersCount:  { type: Number, default: 0 }
 }, { timestamps: true })
 
 export type Restaurant = InferSchemaType<typeof RestaurantSchema>

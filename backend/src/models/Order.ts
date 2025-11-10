@@ -15,14 +15,19 @@ const OrderSchema = new Schema({
   entregador: { type: String },                 // nome exibido
   driverUserId: { type: Schema.Types.ObjectId, ref: 'User' }, // vínculo com o usuário ENTREGADOR
   driverLoc:  { type: DriverLocSchema, default: null },
-    dest: {
-    lng: { type: Number },
-    lat: { type: Number },
-    label: { type: String }
+  dest: {
+  lng: { type: Number },
+  lat: { type: Number },
+  label: { type: String }
+  },
+  closedAt:  { type: Date, default: null },
+  archivedAt:{ type: Date, default: null },
+  rating: {
+    nota: { type: Number, min: 1, max: 5 },
+    comentario: { type: String, default: '' }
     },
-    closedAt:  { type: Date, default: null },
-    archivedAt:{ type: Date, default: null }
-    }, { timestamps: true })
+    ratedAt: { type: Date, default: null }
 
+  }, { timestamps: true })
 export type Order = InferSchemaType<typeof OrderSchema>
 export default mongoose.model('Order', OrderSchema)

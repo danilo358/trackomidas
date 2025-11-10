@@ -1,7 +1,17 @@
 import { Router } from 'express'
-import { searchUsers } from '../controllers/users.controller'
 import { requireAuth, requireRole } from '../middlewares/auth'
+import { listUsers, updateUserRole } from '../controllers/users.controller'
 
 const r = Router()
-r.get('/search', requireAuth, requireRole(['RESTAURANTE','ADMIN']), searchUsers)
+
+r.get('/admin/users',
+  requireAuth, requireRole(['ADMIN']),
+  listUsers
+)
+
+r.patch('/admin/users/:id/role',
+  requireAuth, requireRole(['ADMIN']),
+  updateUserRole
+)
+
 export default r
