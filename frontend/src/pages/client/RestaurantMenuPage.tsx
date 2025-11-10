@@ -15,7 +15,11 @@ export default function RestaurantMenuPage(){
   const [rest, setRest] = useState<RestaurantPublic | null>(null)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const { setRestaurant, addItem, restaurantId } = useCart()
-
+  const { items: cartItems } = useCart()
+    const subtotal = useMemo(
+    () => cartItems.reduce((s: number, i: { preco: number; qtd: number }) => s + i.preco * i.qtd, 0),
+    [cartItems]
+    )
   useEffect(() => {
     if (!id) return
     api.get(`/items/by-restaurant/${id}`).then(r => setItems(r.data as ItemDoc[]))
@@ -106,6 +110,15 @@ export default function RestaurantMenuPage(){
           </div>
         </div>
       )}
+      <footer className="fixed bottom-0 inset-x-0 z-40 backdrop-blur bg-black/60 border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
+            <div className="text-sm opacity-80">
+            Subtotal do carrinho: <strong>R$ {subtotal.toFixed(2)}</strong>
+            </div>
+            <span className="text-xs opacity-60">Veja o frete no carrinho</span>
+        </div>
+      </footer>
     </section>
+    
   )
 }

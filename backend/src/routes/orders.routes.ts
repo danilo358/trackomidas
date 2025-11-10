@@ -1,11 +1,12 @@
 import { Router } from 'express'
-import { create, listForDriver, listMine, nextStatus, setDriver, updateDriverLoc, listHistory, archive} from '../controllers/orders.controller'
+import { create, listForDriver, listMine, nextStatus, setDriver, updateDriverLoc, listHistory, archive, listForCustomer} from '../controllers/orders.controller'
 import { requireAuth, requireRole } from '../middlewares/auth'
 
 const r = Router()
 
 // cliente cria pedido
 r.post('/', requireAuth, requireRole(['CLIENTE','ADMIN']), create)
+r.get('/my', requireAuth, requireRole(['CLIENTE','ADMIN']), listForCustomer)
 
 // restaurante
 r.get('/me', requireAuth, requireRole(['RESTAURANTE','ADMIN']), listMine)

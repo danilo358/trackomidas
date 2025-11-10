@@ -24,18 +24,24 @@ export async function listMine(req: Request, res: Response) {
 const createSchema = z.object({
   restaurantId: z.string(),
   itens: z.array(z.object({ nome: z.string(), qtd: z.number().positive(), preco: z.number().nonnegative() })),
-  total: z.number().nonnegative()
+  total: z.number().nonnegative(),
+  dest: z.object({
+    lng: z.number(),
+    lat: z.number(),
+    label: z.string().optional()
+  }).optional()
 })
 export async function create(req: Request, res: Response) {
   const parsed = createSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
-  const { restaurantId, itens, total } = parsed.data
+  const { restaurantId, itens, total, dest } = parsed.data
   const order = await Order.create({
     restaurant: restaurantId,
     cliente: req.user?.id,
-    itens, total, status: 'AGUARDANDO'
+    itens, total, status: 'AGUARDANDO',
+    dest: dest ? { ...dest } : undefined
   })
-  getIO().emit('order:new', order) // realtime
+  getIO().emit('order:new', order)
   return res.status(201).json(order)
 }
 
@@ -48,7 +54,9 @@ export async function nextStatus(req: Request, res: Response) {
   if (!o) return res.status(404).json({ error: 'Pedido não encontrado' })
   const ordem = ['AGUARDANDO','EM_PREPARO','PRONTO','EM_ROTA','FECHADO'] as const
   const idx = ordem.indexOf(o.status as typeof ordem[number])
-  o.status = ordem[Math.min(idx + 1, ordem.length - 1)]
+  const novoStatus = ordem[Math.min(idx + 1, ordem.length - 1)]
+  o.status = novoStatus
+  if (novoStatus === 'FECHADO' && !o.closedAt) o.closedAt = new Date()
   await o.save()
   return res.json(o)
 }
@@ -124,4 +132,10 @@ export async function archive(req: Request, res: Response) {
   )
   if (!o) return res.status(404).json({ error: 'Pedido não encontrado' })
   return res.json(o)
+}
+
+export async function listForCustomer(req: Request, res: Response) {
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  const docs = await Order.find({ cliente: req.user.id }).sort({ createdAt: -1 })
+  return res.json(docs)
 }

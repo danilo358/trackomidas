@@ -11,6 +11,7 @@ import AddressesPage from './pages/restaurants/tabs/AddressesPage'
 import ReviewsPage from './pages/restaurants/tabs/ReviewsPage'
 import ClientLayout from './pages/client/ClientLayout'
 import ClientAddresses from './pages/client/AddressesPage'
+import ClientOrdersPage from './pages/client/ClientOrdersPage'
 import CartPage from './pages/client/CartPage'
 import RestaurantMenuPage from './pages/client/RestaurantMenuPage'
 import DriverLayout from './pages/driver/DriverLayout'
@@ -59,7 +60,9 @@ export default function App() {
         }
       >
         <Route index element={<Navigate to="enderecos" replace />} />
+        <Route index element={<Navigate to="restaurantes" replace />} />
         <Route path="enderecos" element={<ClientAddresses />} />
+        <Route path="pedidos" element={<ClientOrdersPage />} />
         <Route path="carrinho" element={<CartPage />} />
         <Route path="restaurante/:id" element={<RestaurantMenuPage />} />
       </Route>

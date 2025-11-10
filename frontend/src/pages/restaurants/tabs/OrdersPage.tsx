@@ -15,9 +15,18 @@ type Pedido = {
   entregador?: string
   driverLoc?: { lng: number; lat: number; ts: string }
   archivedAt?: string | null
+  closedAt?: string | null
 }
 
 const inicial: Pedido[] = []
+
+// helper compartilhado para countdown (em ms)
+function msLeft(p: Pedido, nowValue: number) {
+  if (p.status !== 'FECHADO' || p.archivedAt) return 0
+  const base = p.closedAt ? new Date(p.closedAt).getTime() : Date.now()
+  const elapsed = nowValue - base
+  return Math.max(0, 60_000 - elapsed)
+}
 
 export default function OrdersPage() {
   
@@ -25,7 +34,11 @@ export default function OrdersPage() {
   const [historico, setHistorico] = useState<Pedido[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const scheduled = useRef<Set<string>>(new Set())
-  
+  const [now, setNow] = useState<number>(Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
   // Notificação quando entrar pedido "AGUARDANDO"
   useEffect(() => {
     // carrega pedidos do backend
@@ -47,22 +60,21 @@ export default function OrdersPage() {
   useEffect(() => {
     pedidos.forEach(p => {
       if (p.status === 'FECHADO' && !p.archivedAt && !scheduled.current.has(p._id)) {
+        const remainingMs = msLeft(p, now) || 60_000
         scheduled.current.add(p._id)
         setTimeout(async () => {
           try {
             const r = await api.patch(`/orders/me/${p._id}/archive`)
             const arquivado = r.data as Pedido
-            // remove da lista principal e joga no histórico
             setPedidos(prev => prev.filter(x => x._id !== p._id))
             setHistorico(prev => [arquivado, ...prev])
           } finally {
             scheduled.current.delete(p._id)
           }
-        }, 60_000)
+        }, remainingMs)
       }
     })
-  }, [pedidos])
-
+  }, [pedidos, now])
 
   const grupos = useMemo(() => ({
     AGUARDANDO: pedidos.filter(p=>p.status==='AGUARDANDO'),
@@ -85,17 +97,17 @@ export default function OrdersPage() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <audio ref={audioRef} src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA..." />
-      <Col title="Aguardando" icon={<Bell className="size-4" />} cards={grupos.AGUARDANDO} onNext={avancarStatus} onReplace={replacePedido} />
-      <Col title="Em Preparo" icon={<ChefHat className="size-4" />} cards={grupos.EM_PREPARO} onNext={avancarStatus} onReplace={replacePedido} />
-      <Col title="Pronto" icon={<CheckCheck className="size-4" />} cards={grupos.PRONTO} onNext={avancarStatus} onReplace={replacePedido} />
-      <Col title="Em Rota" icon={<Bike className="size-4" />} cards={grupos.EM_ROTA} onNext={avancarStatus} onReplace={replacePedido} />
-      <Col title="Fechado" icon={<Clock className="size-4" />} cards={grupos.FECHADO} onNext={avancarStatus} onReplace={replacePedido} />
+      <Col title="Aguardando" icon={<Bell className="size-4" />} cards={grupos.AGUARDANDO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
+      <Col title="Em Preparo" icon={<ChefHat className="size-4" />} cards={grupos.EM_PREPARO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
+      <Col title="Pronto" icon={<CheckCheck className="size-4" />} cards={grupos.PRONTO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
+      <Col title="Em Rota" icon={<Bike className="size-4" />} cards={grupos.EM_ROTA} onNext={avancarStatus} onReplace={replacePedido} now={now} />
+      <Col title="Fechado" icon={<Clock className="size-4" />} cards={grupos.FECHADO} onNext={avancarStatus} onReplace={replacePedido} now={now} />
       <ColHistory title="Histórico" icon={<Archive className="size-4" />} cards={historico} />
     </div>
   )
 }
 
-function Col({ title, icon, cards, onNext, onReplace }:{ title:string; icon:ReactNode; cards:Pedido[]; onNext:(p:Pedido)=>void; onReplace:(p:Pedido)=>void }){
+function Col({ title, icon, cards, onNext, onReplace, now }:{ title:string; icon:ReactNode; cards:Pedido[]; onNext:(p:Pedido)=>void; onReplace:(p:Pedido)=>void; now:number }){
   const [assignFor, setAssignFor] = useState<string | null>(null)
   return (
     <section className="card">
@@ -105,7 +117,14 @@ function Col({ title, icon, cards, onNext, onReplace }:{ title:string; icon:Reac
           <article key={c._id} className="rounded-xl p-3 bg-white/5">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold">Pedido #{c._id}</h4>
-              <span className="text-sm opacity-70">R$ {c.total.toFixed(2)}</span>
+              <div className="flex items-center gap-2">
+                {c.status === 'FECHADO' && !c.archivedAt && (
+                  <span className="px-2 py-0.5 text-xs rounded-full border border-brand-600/40 bg-brand-600/20 text-brand-200">
+                    {Math.ceil(msLeft(c, now)/1000)}s
+                  </span>
+                )}
+                <span className="text-sm opacity-70">R$ {c.total.toFixed(2)}</span>
+              </div>
             </div>
             <div className="grid gap-2">
               <p className="text-sm opacity-80">{c.entregador ? `Entregador: ${c.entregador}` : '—'}</p>
@@ -121,7 +140,9 @@ function Col({ title, icon, cards, onNext, onReplace }:{ title:string; icon:Reac
            <div className="mt-2 flex items-center justify-between">
             <span className="font-semibold">R$ {c.total.toFixed(2)}</span>
             <div className="flex gap-2">
-              <button className="btn-primary" onClick={()=>onNext(c)}>Avançar status</button>
+              {c.status !== 'FECHADO' && (
+                <button className="btn-primary" onClick={()=>onNext(c)}>Avançar status</button>
+              )}
               <button className="btn-ghost text-sm" onClick={()=>setAssignFor(c._id)}>Atribuir entregador</button>
             </div>
           </div>

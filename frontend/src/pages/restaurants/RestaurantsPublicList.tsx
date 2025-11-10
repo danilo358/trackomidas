@@ -26,16 +26,16 @@ export default function RestaurantsPublicList() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <h1 className="text-2xl font-semibold mb-4">Restaurantes</h1>
         <p className="opacity-70 mb-6">Lista pública. Para fazer pedidos, entre como <span className="font-semibold">CLIENTE</span>.</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {restaurants.map(r => (
-            <article key={r._id} className="card">
+            <article key={r._id} className="card-p3">
               {/* Substitua por <GoogleDriveImage id={r.capaId} /> assim que tiver os IDs reais */}
               <div className="aspect-video rounded-xl bg-white/5 grid place-items-center">
                 <span className="opacity-50">Capa via Google Drive</span>
               </div>
               <header className="mt-3 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold">{r.nome}</h2>
+                  <h2 className="text-lg font-semibold" text-sm mt-2>{r.nome}</h2>
                   <p className="text-sm opacity-70">{(r.categorias?.map(c => c.nome) || []).join(' • ')}</p>
                 </div>
                 <div className="flex items-center gap-1 text-amber-300">
