@@ -6,28 +6,6 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Node](https://img.shields.io/badge/node-18.x-green)
 
-## 📋 Índice
-
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Funcionalidades](#funcionalidades)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Arquitetura](#arquitetura)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Executando o Projeto](#executando-o-projeto)
-- [Estrutura de Pastas](#estrutura-de-pastas)
-- [API Endpoints](#api-endpoints)
-- [Modelos de Dados](#modelos-de-dados)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
-- [Deploy](#deploy)
-- [Testes](#testes)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
-- [Contato](#contato)
-
----
-
 ## 🎯 Sobre o Projeto
 
 O **Trackomidas** é uma plataforma web completa de delivery que conecta restaurantes e clientes, oferecendo uma experiência moderna e intuitiva para pedidos online.
