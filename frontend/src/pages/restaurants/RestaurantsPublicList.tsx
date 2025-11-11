@@ -97,7 +97,7 @@ export default function RestaurantsPublicList() {
         ) : (
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {restaurants.map(r => (
-              <article key={r._id} className="card-p3">
+              <article key={r._id} className="@apply w-full rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-brand-600 border border-white/10 flex flex-col">
                 {/* Logo do Restaurante */}
                 <div
                   className="relative w-full rounded-md overflow-hidden border border-white/10 mb-3"
@@ -164,11 +164,11 @@ export default function RestaurantsPublicList() {
                 )}
 
                 {/* Botão de ação */}
-                <div className="mt-auto">
+                <div className="mt-auto pt-3">
                   {role === 'CLIENTE' ? (
                     <Link
                       to={`/cliente/restaurante/${r._id}`}
-                      className="btn-primary block text-center"
+                      className="btn-primary text-center"
                     >
                       Ver cardápio
                     </Link>
