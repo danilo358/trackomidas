@@ -27,8 +27,6 @@ export async function register(req: Request, res: Response) {
     secure: prod,                   // precisa ser true em HTTPS
     sameSite: prod ? 'none' : 'lax',
     path: '/',
-    // opcional: se quiser compartilhar entre subdomínios, descomente:
-    // domain: '.danilopaulo.com.br',
     maxAge: 1000 * 60 * 60 * 24 * 7
   })
   return res.json({ id: user.id, nome: user.nome, role: user.role })

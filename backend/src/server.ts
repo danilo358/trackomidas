@@ -7,6 +7,7 @@ import { ENV } from './config/env'
 import routes from './routes'
 import { attachUser } from './middlewares/auth'
 import { initIO } from './realtime/io'
+import type { Request, Response } from 'express'
 
 const app = express()
 const allow = (ENV.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean)
@@ -35,7 +36,9 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(attachUser)
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'TrackoMidas API' }))
+app.get('/health', (_req: Request, res: Response) => {
+  return res.json({ ok: true, service: 'TrackoMidas API' })
+})
 app.use(routes)
 
 const httpServer = createServer(app)
