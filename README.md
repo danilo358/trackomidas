@@ -456,7 +456,7 @@ Utilizamos [Conventional Commits](https://www.conventionalcommits.org/):
 ## 📞 Contato
 
 - Email: danilops2006@hotmail.com
-- LinkedIn: [danilo358](www.linkedin.com/in/danilopaulosilva)
+- LinkedIn: [Danilo Silva](www.linkedin.com/in/danilopaulosilva)
 
 ---
 
