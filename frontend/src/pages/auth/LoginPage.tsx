@@ -39,7 +39,6 @@ export default function LoginPage() {
             <button className="btn-primary" type="submit">Entrar</button>
             <a href="/register" className="btn-ghost">Criar conta</a>
           </div>
-          <p className="text-xs opacity-70">Login real: sua role vem do backend e o JWT é salvo em cookie httpOnly.</p>
         </form>
       </div>
     </div>
