@@ -15,13 +15,22 @@ const authSchema = z.object({
 
 export async function register(req: Request, res: Response) {
   const parse = authSchema.safeParse(req.body)
+  const prod = process.env.NODE_ENV === 'production'
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() })
   const { nome, email, senha } = parse.data
   const exists = await User.findOne({ email })
   if (exists) return res.status(409).json({ error: 'E-mail já cadastrado' })
   const user = await User.create({ nome, email, senhaHash: senha, role: 'CLIENTE' })
   const token = signJwt({ id: user.id, role: user.role, nome: user.nome })
-  res.cookie(ENV.COOKIE_NAME, token, cookieOptions())
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: prod,                   // precisa ser true em HTTPS
+    sameSite: prod ? 'none' : 'lax',
+    path: '/',
+    // opcional: se quiser compartilhar entre subdomínios, descomente:
+    // domain: '.danilopaulo.com.br',
+    maxAge: 1000 * 60 * 60 * 24 * 7
+  })
   return res.json({ id: user.id, nome: user.nome, role: user.role })
 }
 

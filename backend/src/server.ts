@@ -9,7 +9,28 @@ import { attachUser } from './middlewares/auth'
 import { initIO } from './realtime/io'
 
 const app = express()
-app.use(cors({ origin: ['http://localhost:5173'], credentials: true }))
+const allow = (ENV.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean)
+
+app.use(cors({
+  credentials: true,
+  origin(origin, cb) {
+    // permite chamadas sem Origin (ex: health, curl)
+    if (!origin) return cb(null, true)
+    cb(null, allow.includes(origin))
+  }
+}))
+
+// (opcional, mas ajuda em alguns clients e preflight)
+app.options('*', cors({
+  credentials: true,
+  origin(origin, cb) {
+    if (!origin) return cb(null, true)
+    cb(null, allow.includes(origin))
+  }
+}))
+
+
+
 app.use(express.json())
 app.use(cookieParser())
 app.use(attachUser)
