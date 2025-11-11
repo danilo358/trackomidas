@@ -42,8 +42,6 @@ O **Trackomidas** é uma plataforma web completa de delivery que conecta restaur
 ### Diferenciais
 
 ✨ Interface moderna e responsiva  
-🚀 Performance otimizada  
-📱 Design mobile-first  
 🔐 Autenticação segura com JWT  
 ⭐ Sistema de avaliações em tempo real  
 
@@ -62,18 +60,13 @@ O **Trackomidas** é uma plataforma web completa de delivery que conecta restaur
 
 ### Para Restaurantes
 - [x] Gestão completa do perfil
-- [x] Cadastro de múltiplos endereços
 - [x] Gerenciamento de cardápio (categorias e produtos)
 - [x] Upload de imagens (Google Drive integration)
 - [x] Configuração de taxas de entrega
-- [x] Dashboard com estatísticas
 - [x] Gerenciamento de pedidos
 
 ### Para Administradores
 - [x] Painel administrativo completo
-- [x] Gerenciamento de usuários
-- [x] Moderação de avaliações
-- [x] Relatórios e analytics
 
 ---
 
@@ -99,7 +92,6 @@ O **Trackomidas** é uma plataforma web completa de delivery que conecta restaur
 
 ### DevOps e Ferramentas
 - **Git** - Controle de versão
-- **Google Drive API** - Armazenamento de imagens
 - **ESLint** - Linting
 - **Prettier** - Formatação de código
 
@@ -126,14 +118,6 @@ O **Trackomidas** é uma plataforma web completa de delivery que conecta restaur
 │   MongoDB   │
 └─────────────┘
 ```
-
-### Padrões de Projeto
-- **MVC** - Separação de responsabilidades
-- **Repository Pattern** - Abstração de acesso a dados
-- **Middleware Pattern** - Autenticação e autorização
-- **RESTful API** - Arquitetura de API
-
----
 
 ## 📦 Pré-requisitos
 
@@ -179,19 +163,16 @@ Crie um arquivo `.env` na pasta `backend`:
 
 ```env
 # Servidor
-PORT=3000
-NODE_ENV=development
+PORT=3333
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/trackomidas
 
 # JWT
 JWT_SECRET=sua_chave_secreta_super_segura_aqui
-JWT_EXPIRES_IN=7d
 
-# Google Drive (opcional)
-GOOGLE_DRIVE_CLIENT_ID=seu_client_id
-GOOGLE_DRIVE_CLIENT_SECRET=seu_client_secret
+#CORS ORIGIN/ FRONT END
+CORS_ORIGIN=http://localhost:5173
 ```
 
 ### Frontend
@@ -199,7 +180,8 @@ GOOGLE_DRIVE_CLIENT_SECRET=seu_client_secret
 Crie um arquivo `.env` na pasta `frontend`:
 
 ```env
-VITE_API_URL=http://localhost:3000/api
+VITE_API_URL=http://localhost:3333
+VITE_MAPBOX_TOKEN=Seu_Token_MapBox
 ```
 
 ---
@@ -213,7 +195,7 @@ VITE_API_URL=http://localhost:3000/api
 cd backend
 npm run dev
 ```
-Servidor rodando em: `http://localhost:3000`
+Servidor rodando em: `http://localhost:3333`
 
 **Frontend:**
 ```bash
@@ -221,20 +203,6 @@ cd frontend
 npm run dev
 ```
 Aplicação rodando em: `http://localhost:5173`
-
-### Produção
-
-**Backend:**
-```bash
-npm run build
-npm start
-```
-
-**Frontend:**
-```bash
-npm run build
-npm run preview
-```
 
 ---
 
@@ -249,22 +217,28 @@ trackomidas/
 │   │   ├── routes/           # Definição de rotas
 │   │   ├── middlewares/      # Autenticação, validação
 │   │   ├── utils/            # Funções auxiliares
+│   │   ├── config/           # Configuração do .env
+│   │   ├── realtime/         # Configuração do socket.io
+│   │   ├── types/            # Configuração do Express para Usuarios
 │   │   └── server.ts         # Entrada da aplicação
 │   ├── .env                  # Variáveis de ambiente
 │   └── package.json
 │
 ├── frontend/
 │   ├── src/
+│   │   ├── auth/             # Configuração das Roles dos Users
 │   │   ├── components/       # Componentes React
-│   │   │   ├── shell/        # Layout principal
-│   │   │   └── ui/           # Componentes reutilizáveis
+│   │   │   ├── maps/         # Componente do Mapa do MAPBOX
+│   │   │   └── shell/        # Layout principal
 │   │   ├── pages/            # Páginas da aplicação
-│   │   │   ├── cliente/      # Área do cliente
-│   │   │   ├── restaurante/  # Área do restaurante
+│   │   │   ├── auth/         # Área de Login
+│   │   │   ├── client/       # Área do cliente
+│   │   │   ├── driver/       # Área do entregador
+│   │   │   ├── restaurants/  # Área do restaurante
 │   │   │   └── admin/        # Área administrativa
 │   │   ├── stores/           # Zustand stores
 │   │   ├── lib/              # Utilitários
-│   │   ├── types/            # TypeScript types
+│   │   ├── index.css         # Configuração do tailwind
 │   │   └── App.tsx           # Componente raiz
 │   ├── .env                  # Variáveis de ambiente
 │   └── package.json
@@ -278,108 +252,135 @@ trackomidas/
 
 ### Autenticação
 ```http
-POST   /api/auth/register     # Registrar novo usuário
-POST   /api/auth/login        # Login
-GET    /api/auth/me           # Obter usuário atual
+POST   /register     # Registrar novo usuário
+POST   /login        # Login
+POST   /logout
+GET    /me           # Obter usuário atual
 ```
 
 ### Restaurantes
 ```http
-GET    /api/restaurants           # Listar restaurantes (público)
-GET    /api/restaurants/:id       # Detalhes de um restaurante
-GET    /api/restaurants/me        # Meu restaurante (auth)
-PUT    /api/restaurants/me        # Atualizar meu restaurante
-POST   /api/restaurants/me/addresses      # Adicionar endereço
-PATCH  /api/restaurants/me/addresses/:id  # Atualizar endereço
-DELETE /api/restaurants/me/addresses/:id  # Remover endereço
+GET    /restaurants/me                        # Meu restaurante (auth)
+PUT    /restaurants/me                        # Atualizar meu restaurante
+POST   /restaurants/me/addresses              # Adicionar endereço
+PATCH  /restaurants/me/addresses/:id          # Atualizar endereço
+DELETE /restaurants/me/addresses/:id          # Remover endereço
+GET    /restaurants/:id                       # Restaurante para publico
+```
+
+### Categorias
+```http
+POST   /restaurans/me/categories             # Listar categorias
+PATCH  /restaurans/me/categories/:id         # Atualizar categoria
+DELETE /restaurans/me/categories/:id         # Remover categoria
 ```
 
 ### Produtos
 ```http
-GET    /api/products             # Listar produtos
-POST   /api/products             # Criar produto
-PATCH  /api/products/:id         # Atualizar produto
-DELETE /api/products/:id         # Remover produto
+GET    /items/me             # Listar produtos
+POST   /items/me             # Criar produto
+PATCH  /items/me/:id         # Atualizar produto
+DELETE /items/me/:id         # Remover produto
 ```
 
 ### Pedidos
 ```http
-GET    /api/orders               # Listar pedidos
-POST   /api/orders               # Criar pedido
-GET    /api/orders/:id           # Detalhes do pedido
-PATCH  /api/orders/:id/status    # Atualizar status
+GET    /orders/me            # Listar pedidos
+POST   /orders               # Criar pedido
+GET    /orders/my            # Detalhes do pedido
+PATCH  /orders/:id/next      # Atualizar status
 ```
 
 ### Avaliações
 ```http
-POST   /api/ratings              # Criar avaliação
-GET    /api/ratings/:restaurantId # Avaliações de um restaurante
+PATCH   /my/:id/rate         # Criar avaliação
+GET    /me/reviews           # Avaliações de um restaurante
 ```
-
-> 📘 **Documentação completa da API:** [Swagger/Postman Collection]
-
----
 
 ## 💾 Modelos de Dados
 
 ### User
 ```typescript
 {
+  nome: { type: String, required: true },
+  email: { type: String, required: true, unique: true, index: true },
+  senhaHash: { type: String, required: true },
+  role: { type: String, enum: ROLES, default: 'CLIENTE' as Role },
+  enderecos: [CustomerAddressSchema]
+}
+```
+
+### Endereço Usuario
+```typescript
+{
   _id: ObjectId,
-  nome: string,
-  email: string,
-  senha: string (hash),
-  role: 'CLIENTE' | 'RESTAURANTE' | 'ADMIN',
-  telefone?: string,
-  createdAt: Date,
-  updatedAt: Date
+  apelido: { type: String, required: true },
+  cep: String,
+  rua: String,
+  numero: String,
+  bairro: String,
+  cidade: String,
+  uf: String,
+  complemento: String
 }
 ```
 
 ### Restaurant
 ```typescript
 {
-  _id: ObjectId,
-  owner: ObjectId (ref: User),
-  nome: string,
-  descricao?: string,
-  enderecos: [{
-    apelido: string,
-    cep: string,
-    rua: string,
-    numero: string,
-    cidade: string,
-    uf: string,
-    freteFixo: number,
-    freteKm: number,
-    logoId: string
-  }],
-  categorias: [{ nome: string }],
-  ratingsSum: number,
-  ratingsCount: number,
-  ordersCount: number,
-  createdAt: Date,
-  updatedAt: Date
+  owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  nome: { type: String, required: true },
+  descricao: String,
+  // ⚠️ CAMPOS DEPRECADOS - Mantidos por compatibilidade
+  ratingAvg: { type: Number, default: 0 },
+  ratingCount: { type: Number, default: 0 },
+  // ✅ CAMPOS CORRETOS
+  ratingsCount: { type: Number, default: 0 },
+  ratingsSum:   { type: Number, default: 0 },
+  ordersCount:  { type: Number, default: 0 }, 
+  enderecos: [AddressSchema],
+  categorias: [CategorySchema]
+}
+```
+
+### Endereço Restaurante
+```typescript
+{
+  apelido: { type: String, required: true },
+  cep: String,
+  rua: String,
+  numero: String,
+  cidade: String,
+  uf: String,
+  freteFixo: { type: Number, default: 0 },
+  freteKm: { type: Number, default: 0 },
+  logoId: { type: String, default: '' }
 }
 ```
 
 ### Order
 ```typescript
 {
-  _id: ObjectId,
-  cliente: ObjectId (ref: User),
-  restaurante: ObjectId (ref: Restaurant),
-  items: [{
-    produto: ObjectId (ref: Product),
-    quantidade: number,
-    preco: number
-  }],
-  status: 'PENDENTE' | 'CONFIRMADO' | 'EM_PREPARO' | 'SAIU_ENTREGA' | 'ENTREGUE' | 'CANCELADO',
-  total: number,
-  frete: number,
-  endereco: { /* endereço de entrega */ },
-  createdAt: Date,
-  updatedAt: Date
+  restaurant: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true, index: true },
+  cliente:    { type: Schema.Types.ObjectId, ref: 'User', required: false },
+  itens:      [{ nome: String, qtd: Number, preco: Number }],
+  total:      { type: Number, required: true },
+  status:     { type: String, enum: ['AGUARDANDO','EM_PREPARO','PRONTO','EM_ROTA','FECHADO'], default: 'AGUARDANDO' },
+  entregador: { type: String },                 // nome exibido
+  driverUserId: { type: Schema.Types.ObjectId, ref: 'User' }, // vínculo com o usuário ENTREGADOR
+  driverLoc:  { type: DriverLocSchema, default: null },
+  dest: {
+  lng: { type: Number },
+  lat: { type: Number },
+  label: { type: String }
+  },
+  closedAt:  { type: Date, default: null },
+  archivedAt:{ type: Date, default: null },
+  rating: {
+    nota: { type: Number, min: 1, max: 5 },
+    comentario: { type: String, default: '' }
+    },
+    ratedAt: { type: Date, default: null }
 }
 ```
 
@@ -394,13 +395,13 @@ GET    /api/ratings/:restaurantId # Avaliações de um restaurante
 | `PORT` | Porta do servidor | `3000` |
 | `MONGODB_URI` | String de conexão MongoDB | `mongodb://localhost:27017/trackomidas` |
 | `JWT_SECRET` | Chave secreta JWT | `minhaChaveSecreta123` |
-| `JWT_EXPIRES_IN` | Tempo de expiração do token | `7d` |
-
+| `CORS_ORIGIN` | Origem do FrontEnd | `http://localhost:5173` |
 ### Frontend (`.env`)
 
 | Variável | Descrição | Exemplo |
 |----------|-----------|---------|
 | `VITE_API_URL` | URL da API | `http://localhost:3000/api` |
+| `VITE_MAPBOX_TOKEN` | Token da API do MAPBOX | `pk.ey....` |
 
 ---
 
@@ -418,23 +419,6 @@ GET    /api/ratings/:restaurantId # Avaliações de um restaurante
 1. Configure `VITE_API_URL` para URL de produção
 2. Build: `npm run build`
 3. Deploy da pasta `dist/`
-
----
-
-## 🧪 Testes
-
-### Backend
-```bash
-npm run test
-npm run test:watch
-npm run test:coverage
-```
-
-### Frontend
-```bash
-npm run test
-npm run test:ui
-```
 
 ---
 
@@ -462,33 +446,20 @@ Utilizamos [Conventional Commits](https://www.conventionalcommits.org/):
 
 ---
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
 
 ## 👥 Autores
 
-- **Seu Nome** - *Desenvolvimento* - [GitHub](https://github.com/seu-usuario)
+- **Danilo Silva** - *Desenvolvimento* - [GitHub](https://github.com/danilo358)
 
 ---
 
 ## 📞 Contato
 
-- Email: seu.email@example.com
-- LinkedIn: [seu-perfil](https://linkedin.com/in/seu-perfil)
-- Portfolio: [seu-site.com](https://seu-site.com)
+- Email: danilops2006@hotmail.com
+- LinkedIn: [danilo358](www.linkedin.com/in/danilopaulosilva)
 
 ---
 
-## 🙏 Agradecimentos
-
-- Comunidade React
-- Time do MongoDB
-- Contribuidores open source
-
----
 
 ## 📊 Status do Projeto
 
@@ -499,4 +470,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-**Feito com ❤️ por [Seu Nome]**
+**Feito com ❤️ por Danilo Silva**
