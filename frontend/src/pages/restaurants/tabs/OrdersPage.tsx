@@ -144,13 +144,15 @@ function Col({ title, icon, cards, onNext, onReplace, now }:{ title:string; icon
            <div className="mt-2 flex items-center justify-between">
             <span className="font-semibold">R$ {c.total.toFixed(2)}</span>
             <div className="flex gap-2">
-              {c.status !== 'FECHADO' && (
+              {c.status !== 'FECHADO' && c.status !== 'PRONTO' && (
                 <button className="btn-primary" onClick={()=>onNext(c)}>Avançar status</button>
               )}
+              {c.status === 'PRONTO' &&
               <button className="btn-ghost text-sm" onClick={()=>setAssignFor(c._id)}>Atribuir entregador</button>
+              }
             </div>
           </div>
-          {assignFor && (
+          {assignFor && c.status=="PRONTO" &&(
             <div className="fixed inset-0 bg-black/60 grid place-items-center z-50">
               <div className="card w-full max-w-lg">
                 <div className="flex items-center justify-between mb-2">

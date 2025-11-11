@@ -1,5 +1,6 @@
 import GoogleDriveImage from '../../../components/GoogleDriveImage'
-import { useEffect, useState } from 'react'
+import { extractDriveId } from '../../../lib/drive'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
 import api from '../../../lib/api'
 
@@ -12,6 +13,8 @@ export default function ItemsPage(){
   const [form, setForm] = useState<Omit<ItemDoc,'_id'>>({ nome:'', preco:0, descricao:'', driveId:'', categoriaId:'' })
   const [editId, setEditId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Omit<ItemDoc,'_id'>>({ nome:'', preco:0, descricao:'', driveId:'', categoriaId:'' })
+  const previewId   = useMemo(() => extractDriveId(form.driveId || '') || '', [form.driveId])
+  const editPreview = useMemo(() => extractDriveId(editForm.driveId || '') || '', [editForm.driveId])
 
   useEffect(() => {
     api.get('/items/me').then(r => setItens(r.data as ItemDoc[])).catch(()=>setItens([]))
@@ -22,7 +25,13 @@ export default function ItemsPage(){
   function onChangeEdit<K extends keyof Omit<ItemDoc,'_id'>>(k: K, v: Omit<ItemDoc,'_id'>[K]) { setEditForm(prev => ({ ...prev, [k]: v })) }
 
   async function criar(){
-    const r = await api.post('/items/me', { ...form, preco: Number(form.preco || 0), categoriaId: form.categoriaId || undefined })
+    const r = await api.post('/items/me', {
+      nome: form.nome,
+      preco: Number(form.preco || 0),
+      categoriaId: form.categoriaId || undefined,
+      descricao: form.descricao,
+      driveId: extractDriveId(form.driveId || '') || ''
+    })
     setItens(prev => [r.data as ItemDoc, ...prev])
     setForm({ nome:'', preco:0, descricao:'', driveId:'', categoriaId:'' })
   }
@@ -39,7 +48,13 @@ export default function ItemsPage(){
 
   async function salvarEditar(){
     if (!editId) return
-    const r = await api.patch(`/items/me/${editId}`, { ...editForm, preco: Number(editForm.preco || 0), categoriaId: editForm.categoriaId || undefined })
+    const r = await api.patch(`/items/me/${editId}`, {
+      nome: editForm.nome,
+      preco: Number(editForm.preco || 0),
+      categoriaId: editForm.categoriaId || undefined,
+      descricao: editForm.descricao,
+      driveId: extractDriveId(editForm.driveId || '') || ''
+    })
     const novo = r.data as ItemDoc
     setItens(prev => prev.map(x => x._id === novo._id ? novo : x))
     setEditId(null)
@@ -63,23 +78,55 @@ export default function ItemsPage(){
             </select>
           </div>
           <div className="sm:col-span-3"><label className="label">Descrição</label><input className="input" value={form.descricao} onChange={e=>onChange('descricao', e.target.value)} placeholder="Mussarela, tomate e manjericão." /></div>
-          <div className="sm:col-span-3"><label className="label">Google Drive ID (imagem)</label><input className="input" value={form.driveId} onChange={e=>onChange('driveId', e.target.value)} placeholder="1x2y3z..." /></div>
+          <div className="sm:col-span-6">
+            <label className="label">Link/ID do Google Drive (imagem)</label>
+            <div className="flex items-start gap-3">
+              <input
+                className="input flex-1"
+                value={form.driveId}
+                onChange={e=>onChange('driveId', e.target.value)}
+                placeholder="Cole o link completo ou o ID"
+              />
+              <div
+                className="relative shrink-0 rounded-md overflow-hidden border border-white/10"
+                style={{ width: '110px', height: '110px' }}   // quadrado compacto
+              >
+                {previewId ? (
+                  <GoogleDriveImage id={previewId} className="absolute inset-0 w-full h-full" />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-[10px] opacity-60 bg-white/5">
+                    Sem imagem
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
         <button className="btn-primary" onClick={criar}><Plus className="size-4" />Adicionar item</button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+
+
         {itens.map(i => (
-          <article key={i._id} className="card">
-            {i.driveId ? <GoogleDriveImage id={i.driveId} title={i.nome}/> : <div className="aspect-square rounded-xl bg-white/5" />}
-            <h3 className="mt-3 font-semibold">{i.nome}</h3>
-            {i.descricao && <p className="opacity-70 text-sm">{i.descricao}</p>}
-            <div className="mt-2 flex items-center justify-between">
-              <span className="font-semibold">R$ {i.preco.toFixed(2)}</span>
-              <div className="flex gap-1">
-                <button className="btn-ghost text-sm" onClick={()=>abrirEditar(i)}><Pencil className="size-4"/>Editar</button>
-                <button className="btn-ghost text-sm" onClick={()=>excluir(i._id)}><Trash2 className="size-4"/>Excluir</button>
-              </div>
+          <article className="card p-3 flex flex-col min-h-[340px] sm:min-h-[360px] lg:min-h-[380px]">
+            <div
+              className="relative w-full rounded-md overflow-hidden border border-white/10"
+              style={{ paddingTop: '100%' }}  // quadrado
+            >
+              {i.driveId ? (
+                <GoogleDriveImage id={i.driveId} className="absolute inset-0 w-full h-full" />
+              ) : (
+                <div className="absolute inset-0 w-full h-full grid place-items-center text-xs opacity-60 bg-white/5">
+                  Sem imagem
+                </div>
+              )}
+            </div>
+            <h4 className="mt-2 text-sm font-medium truncate" title={i.nome}>{i.nome}</h4>
+            <div className="mt-auto pt-3 flex flex-col gap-2">
+              <span className="font-semibold text-sm">R$ {i.preco.toFixed(2)}</span>
+                <button className="btn-ghost h-8 px-3" onClick={()=>abrirEditar(i)}><Pencil className="size-4"/>Editar</button>
+                <button className="btn-ghost h-8 px-3" onClick={()=>excluir(i._id)}><Trash2 className="size-4"/>Excluir</button>
             </div>
           </article>
         ))}
@@ -87,7 +134,7 @@ export default function ItemsPage(){
       </div>
 
       {editId && (
-        <div className="fixed inset-0 bg-black/60 grid place-items-center z-50">
+        <div className="fixed inset-0 bg-black/90 grid place-items-center z-50">
           <div className="card w-full max-w-xl">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold">Editar item</h3>
@@ -103,7 +150,29 @@ export default function ItemsPage(){
                 </select>
               </div>
               <div className="sm:col-span-2"><label className="label">Descrição</label><input className="input" value={editForm.descricao} onChange={e=>onChangeEdit('descricao', e.target.value)} /></div>
-              <div className="sm:col-span-2"><label className="label">Google Drive ID (imagem)</label><input className="input" value={editForm.driveId} onChange={e=>onChangeEdit('driveId', e.target.value)} /></div>
+              <div className="sm:col-span-2">
+                <label className="label">Link/ID do Google Drive (imagem)</label>
+                <div className="flex items-start gap-3">
+                  <input
+                    className="input flex-1"
+                    value={editForm.driveId}
+                    onChange={e=>onChangeEdit('driveId', e.target.value)}
+                    placeholder="Cole o link completo ou o ID"
+                  />
+                  <div
+                    className="relative shrink-0 rounded-md overflow-hidden border border-white/10"
+                    style={{ width: '110px', height: '110px' }}  // mesmo tamanho do novo
+                  >
+                    {editPreview ? (
+                      <GoogleDriveImage id={editPreview} className="absolute inset-0 w-full h-full" />
+                    ) : (
+                      <div className="absolute inset-0 grid place-items-center text-[10px] opacity-60 bg-white/5">
+                        Sem imagem
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="mt-4 flex gap-2 justify-end">
               <button className="btn-ghost" onClick={()=>setEditId(null)}>Cancelar</button>

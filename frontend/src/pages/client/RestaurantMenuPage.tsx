@@ -63,7 +63,12 @@ export default function RestaurantMenuPage(){
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {(itemsByCat[c._id] ?? []).map(i => (
                 <article key={i._id} className="rounded-xl p-3 bg-white/5">
-                  {i.driveId ? <GoogleDriveImage id={i.driveId} title={i.nome}/> : <div className="aspect-square rounded-xl bg-white/5" />}
+                  <div className="relative w-full rounded-xl overflow-hidden border border-white/10" style={{ paddingTop: '100%' }}>
+                    {i.driveId
+                      ? <GoogleDriveImage id={i.driveId} title={i.nome} className="absolute inset-0 w-full h-full" />
+                      : <div className="absolute inset-0 w-full h-full bg-white/5" />
+                    }
+                  </div>
                   <h3 className="mt-3 font-semibold">{i.nome}</h3>
                   {i.descricao && <p className="opacity-70 text-sm">{i.descricao}</p>}
                   <div className="mt-2 flex items-center justify-between">
@@ -89,10 +94,15 @@ export default function RestaurantMenuPage(){
       {(itemsByCat['__sem'] ?? []).length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 font-semibold"><ChevronDown className="size-4" />Sem categoria</div>
-          <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-3 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {itemsByCat['__sem'].map(i => (
               <article key={i._id} className="rounded-xl p-3 bg-white/5">
-                {i.driveId ? <GoogleDriveImage id={i.driveId} title={i.nome}/> : <div className="aspect-square rounded-xl bg-white/5" />}
+                <div className="relative w-full rounded-xl overflow-hidden border border-white/10" style={{ paddingTop: '100%' }}>
+                  {i.driveId
+                    ? <GoogleDriveImage id={i.driveId} title={i.nome} className="absolute inset-0 w-full h-full" />
+                    : <div className="absolute inset-0 w-full h-full bg-white/5" />
+                  }
+                </div>
                 <h3 className="mt-3 font-semibold">{i.nome}</h3>
                 {i.descricao && <p className="opacity-70 text-sm">{i.descricao}</p>}
                 <div className="mt-2 flex items-center justify-between">

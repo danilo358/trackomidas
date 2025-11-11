@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/auth'
 export default function AppHeader(){
   const role = useAuthStore(s => s.role)
   const logout = useAuthStore(s => s.logout)
+  const isLogged = !!role
 
   const link = (to:string, label:string) => (
     <NavLink
@@ -55,7 +56,11 @@ export default function AppHeader(){
           )}
         </nav>
         <div className="flex items-center gap-2">
-          <button className="btn-ghost text-sm" onClick={()=>logout()}>Sair</button>
+          {isLogged ? (
+          <button className="btn-ghost" onClick={logout}>Sair</button>
+        ) : (
+          <NavLink to="/login" className="btn-ghost">Entrar</NavLink>
+        )}
         </div>
       </div>
     </header>

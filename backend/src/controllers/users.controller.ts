@@ -2,13 +2,26 @@ import { Request, Response } from 'express'
 import User from '../models/User'
 
 export async function listUsers(req: Request, res: Response) {
-  const { q } = req.query as { q?: string }
-  const filter: any = {}
+  const { q, role } = req.query as {
+    q?: string
+    role?: 'ADMIN' | 'RESTAURANTE' | 'CLIENTE' | 'ENTREGADOR'
+  }
+
+  const filter: Record<string, unknown> = {}
+
   if (q && q.trim()) {
     const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
     filter.$or = [{ nome: rx }, { email: rx }]
   }
-  const users = await User.find(filter).select('_id nome email role createdAt').sort({ createdAt: -1 })
+
+  if (role) {
+    filter.role = role
+  }
+
+  const users = await User.find(filter)
+    .select('_id nome email role createdAt')
+    .sort({ createdAt: -1 })
+
   res.json(users)
 }
 

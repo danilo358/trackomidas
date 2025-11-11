@@ -15,9 +15,12 @@
 .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition; }
 .btn-primary { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition bg-brand-600 hover:bg-brand-700; }
 .btn-ghost { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition bg-white/5 hover:bg-white/10; }
-.input { @apply w-full rounded-xl bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-brand-600; }
+.input { @apply w-full rounded-xl bg-white/5 px-4 py-2 outline-none focus:ring-2 focus:ring-brand-600 border border-white/10; }
 .label { @apply text-sm opacity-80; }
-
+select.input,
+select.input option {
+  @apply bg-ink-900 text-white;
+}
 /* Fundo animado para a tela de login (gradiente orgânico) */
 .login-bg {
   position: fixed; inset: 0; overflow: hidden; pointer-events: none;

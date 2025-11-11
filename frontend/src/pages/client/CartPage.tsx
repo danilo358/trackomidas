@@ -88,7 +88,7 @@ export default function CartPage(){
   const subtotal = useMemo(() => items.reduce((acc, i)=>acc + i.preco*i.qtd, 0), [items])
   const frete = useMemo(() => freteFixo + freteKm * (distanceKm || 0), [freteFixo, freteKm, distanceKm])
   const total = useMemo(() => subtotal + frete, [subtotal, frete])
-
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
   async function checkout(){
     if (!restaurantId) { alert('Selecione um restaurante'); return }
     if (items.length===0) { alert('Carrinho vazio'); return }
@@ -97,7 +97,8 @@ export default function CartPage(){
         dest: addrCoord ? { lng: addrCoord[0], lat: addrCoord[1], label: selectedAddr } : undefined
     })
     clear()
-    alert('Pedido criado!')
+    setToastMsg('Pedido criado com sucesso!')
+    setTimeout(() => setToastMsg(null), 3000)
   }
 
   return (
@@ -156,6 +157,15 @@ export default function CartPage(){
           </div>
         )}
       </div>
+      {toastMsg && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="card shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{toastMsg}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
 
     {/* Footer fixo */}
