@@ -392,7 +392,7 @@ GET    /me/reviews           # Avaliações de um restaurante
 
 | Variável | Descrição | Exemplo |
 |----------|-----------|---------|
-| `PORT` | Porta do servidor | `3000` |
+| `PORT` | Porta do servidor | `3333` |
 | `MONGODB_URI` | String de conexão MongoDB | `mongodb://localhost:27017/trackomidas` |
 | `JWT_SECRET` | Chave secreta JWT | `minhaChaveSecreta123` |
 | `CORS_ORIGIN` | Origem do FrontEnd | `http://localhost:5173` |
@@ -400,7 +400,7 @@ GET    /me/reviews           # Avaliações de um restaurante
 
 | Variável | Descrição | Exemplo |
 |----------|-----------|---------|
-| `VITE_API_URL` | URL da API | `http://localhost:3000/api` |
+| `VITE_API_URL` | URL da API | `http://localhost:3333` |
 | `VITE_MAPBOX_TOKEN` | Token da API do MAPBOX | `pk.ey....` |
 
 ---
