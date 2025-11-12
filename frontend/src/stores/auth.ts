@@ -1,32 +1,68 @@
 import { create } from 'zustand'
-import api from '../lib/api'
+import { persist } from 'zustand/middleware'
 
-export type Role = 'ADMIN' | 'RESTAURANTE' | 'CLIENTE' | 'ENTREGADOR' | null
+export type Role = 'ADMIN'|'RESTAURANTE'|'ENTREGADOR'|'CLIENTE'
+export type User = { id: string; nome: string; role: Role }
+const API = import.meta.env.VITE_API ?? 'http://localhost:3333'
 
-type AuthState = {
-  role: Role
-  nome?: string
-  token?: string
+type State = {
+  user?: User
+  role?: Role
+  ready: boolean
   login: (email: string, senha: string) => Promise<void>
-  loginDev: (r: Exclude<Role, null>, nome?: string) => void
+  check: () => Promise<void>
   fetchMe: () => Promise<void>
   logout: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  role: null,
-  token: undefined,
-  async login(email, senha) {
-    const r = await api.post('/auth/login', { email, senha })
-    set({ role: r.data.role, nome: r.data.nome })
-  },
-  loginDev: (r, nome) => set({ role: r, nome }),
-  async fetchMe() {
-    const r = await api.get('/auth/me')
-    if (r.data?.user) set({ role: r.data.user.role, nome: r.data.user.nome })
-  },
-  async logout() {
-    await api.post('/auth/logout')
-    set({ role: null, token: undefined, nome: undefined })
-  }
-}))
+export const useAuthStore = create<State>()(
+  persist(
+    (set, get) => ({
+      user: undefined,
+      role: undefined,
+      ready: false,
+
+      async login(email, senha) {
+        const r = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha }),
+          credentials: 'include',
+        })
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}))
+          throw new Error(err?.error || 'Falha no login')
+        }
+        const u = (await r.json()) as User
+        set({ user: u, role: u.role })
+      },
+
+      async check() {
+        try {
+          const r = await fetch(`${API}/auth/me`, { credentials: 'include' })
+          if (r.ok) {
+            const u = (await r.json()) as User
+            set({ user: u, role: u.role, ready: true })
+          } else {
+            set({ user: undefined, role: undefined, ready: true })
+          }
+        } catch {
+          set({ ready: true })
+        }
+      },
+
+      async fetchMe() {
+        return get().check()
+      },
+
+      async logout() {
+        await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' })
+        set({ user: undefined, role: undefined })
+      },
+    }),
+    {
+      name: 'auth',
+      partialize: (s) => ({ user: s.user, role: s.role }),
+    }
+  )
+)

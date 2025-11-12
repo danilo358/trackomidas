@@ -46,12 +46,12 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function me(req: Request, res: Response) {
-  if (!req.user) return res.status(200).json({ user: null })
-  return res.json({ user: req.user })
+  if (!req.user) return res.status(401).json({ error: 'Não autenticado' })
+  return res.json({ id: req.user.id, nome: req.user.nome, role: req.user.role })
 }
 
 export async function logout(_req: Request, res: Response) {
-  res.clearCookie(ENV.COOKIE_NAME)
+  res.clearCookie(ENV.COOKIE_NAME, { ...cookieOptions(), maxAge: 0 })
   return res.json({ ok: true })
 }
 
@@ -80,10 +80,14 @@ export async function setRole(req: Request, res: Response) {
 }
 
 function cookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production'
+  const crossSite = process.env.CROSS_SITE_COOKIES === '1'
+
   return {
     httpOnly: true,
-    sameSite: 'lax' as const,
-    secure: false, // em produção, habilitar true com HTTPS
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  }
+    secure: isProd,                      // HTTPS em produção
+    sameSite: crossSite ? 'none' : 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000,     // 7 dias
+  } as const
 }

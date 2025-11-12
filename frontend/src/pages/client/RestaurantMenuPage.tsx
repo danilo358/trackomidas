@@ -16,6 +16,7 @@ export default function RestaurantMenuPage(){
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const { setRestaurant, addItem, restaurantId } = useCart()
   const { items: cartItems } = useCart()
+  
     const subtotal = useMemo(
     () => cartItems.reduce((s: number, i: { preco: number; qtd: number }) => s + i.preco * i.qtd, 0),
     [cartItems]
@@ -32,7 +33,7 @@ export default function RestaurantMenuPage(){
     })
     setRestaurant(id)
   }, [id, setRestaurant])
-
+  
   const itemsByCat = useMemo(() => {
     const buckets: Record<string, ItemDoc[]> = {}
     items.forEach(i => {
@@ -61,7 +62,10 @@ export default function RestaurantMenuPage(){
           </button>
           {expanded[c._id] && (
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {(itemsByCat[c._id] ?? []).map(i => (
+              {(itemsByCat[c._id] ?? []).map(i =>{
+                const cartItem = cartItems.find(ci => ci.itemId === i._id)
+                const currentQty = cartItem ? cartItem.qtd : 0
+                return (
                 <article key={i._id} className="rounded-xl p-3 bg-white/5">
                   <div className="relative w-full rounded-xl overflow-hidden border border-white/10" style={{ paddingTop: '100%' }}>
                     {i.driveId
@@ -73,17 +77,33 @@ export default function RestaurantMenuPage(){
                   {i.descricao && <p className="opacity-70 text-sm">{i.descricao}</p>}
                   <div className="mt-2 flex items-center justify-between">
                     <span className="font-semibold">R$ {i.preco.toFixed(2)}</span>
-                    <button
-                      className="btn-ghost text-sm"
-                      onClick={()=>addItem({ itemId: i._id, nome: i.nome, qtd: 1, preco: i.preco })}
-                      disabled={!!restaurantId && restaurantId !== id}
-                      title={restaurantId && restaurantId !== id ? 'Carrinho pertence a outro restaurante' : 'Adicionar'}
-                    >
-                      Adicionar
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="btn-ghost size-6 flex items-center justify-center rounded-full"
+                        onClick={() => addItem({ itemId: i._id, nome: i.nome, qtd: -1, preco: i.preco })}
+                        disabled={!!restaurantId && restaurantId !== id || currentQty === 0}
+                        style={{ visibility: currentQty === 0 ? 'hidden' : 'visible' }}
+                        title="Remover 1"
+                      >
+                        -
+                      </button>
+
+                      {currentQty > 0 && (
+                        <span className="font-medium text-sm tabular-nums">{currentQty}</span>
+                      )}
+
+                      <button
+                        className="btn-ghost size-6 flex items-center justify-center rounded-full"
+                        onClick={() => addItem({ itemId: i._id, nome: i.nome, qtd: 1, preco: i.preco })}
+                        disabled={!!restaurantId && restaurantId !== id}
+                        title="Adicionar 1"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </article>
-              ))}
+              )})}
               {(itemsByCat[c._id] ?? []).length === 0 && <p className="text-sm opacity-60">Sem itens nessa categoria.</p>}
             </div>
           )}
@@ -95,7 +115,10 @@ export default function RestaurantMenuPage(){
         <div className="card">
           <div className="flex items-center gap-2 font-semibold"><ChevronDown className="size-4" />Sem categoria</div>
           <div className="mt-3 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {itemsByCat['__sem'].map(i => (
+            {itemsByCat['__sem'].map(i => {
+              const cartItem = cartItems.find(ci => ci.itemId === i._id)
+              const currentQty = cartItem ? cartItem.qtd : 0
+              return(
               <article key={i._id} className="rounded-xl p-3 bg-white/5">
                 <div className="relative w-full rounded-xl overflow-hidden border border-white/10" style={{ paddingTop: '100%' }}>
                   {i.driveId
@@ -107,16 +130,33 @@ export default function RestaurantMenuPage(){
                 {i.descricao && <p className="opacity-70 text-sm">{i.descricao}</p>}
                 <div className="mt-2 flex items-center justify-between">
                   <span className="font-semibold">R$ {i.preco.toFixed(2)}</span>
-                  <button
-                    className="btn-ghost text-sm"
-                    onClick={()=>addItem({ itemId: i._id, nome: i.nome, qtd: 1, preco: i.preco })}
-                    disabled={!!restaurantId && restaurantId !== id}
-                  >
-                    Adicionar
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="btn-ghost size-6 flex items-center justify-center rounded-full"
+                      onClick={() => addItem({ itemId: i._id, nome: i.nome, qtd: -1, preco: i.preco })}
+                      disabled={!!restaurantId && restaurantId !== id || currentQty === 0}
+                      style={{ visibility: currentQty === 0 ? 'hidden' : 'visible' }}
+                      title="Remover 1"
+                    >
+                      -
+                    </button>
+
+                    {currentQty > 0 && (
+                      <span className="font-medium text-sm tabular-nums">{currentQty}</span>
+                    )}
+
+                    <button
+                      className="btn-ghost size-6 flex items-center justify-center rounded-full"
+                      onClick={() => addItem({ itemId: i._id, nome: i.nome, qtd: 1, preco: i.preco })}
+                      disabled={!!restaurantId && restaurantId !== id}
+                      title="Adicionar 1"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </article>
-            ))}
+            )})}
           </div>
         </div>
       )}

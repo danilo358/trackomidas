@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import api from '../../lib/api'
+import { useAuthStore } from '../../stores/auth'
 
 type Role = 'ADMIN'|'RESTAURANTE'|'CLIENTE'|'ENTREGADOR'
 type UserLite = { _id:string; nome:string; email:string; role:Role }
@@ -7,7 +10,14 @@ type UserLite = { _id:string; nome:string; email:string; role:Role }
 export default function UsersPage(){
   const [q, setQ] = useState('')
   const [rows, setRows] = useState<UserLite[]>([])
-  async function load(){ const r = await api.get('/users/admin/users', { params:{ q } }); setRows(r.data as UserLite[]) }
+  const logout = useAuthStore(s => s.logout)
+  const nav = useNavigate()
+
+  async function load(){ 
+    const r = await api.get('/users/admin/users', { params:{ q } })
+    setRows(r.data as UserLite[]) 
+  }
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{ void load() }, [])
 
@@ -16,13 +26,21 @@ export default function UsersPage(){
     setRows(prev => prev.map(u => u._id===id ? r.data as UserLite : u))
   }
 
+  function handleLogout() {
+    logout()
+    nav('/login', { replace: true })
+  }
+
   return (
     <section className="grid gap-4">
       <header className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Usuários</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <input className="input" placeholder="Buscar por nome/e-mail" value={q} onChange={e=>setQ(e.target.value)} />
           <button className="btn-primary" onClick={()=>void load()}>Buscar</button>
+          <button className="btn-ghost" onClick={handleLogout}>
+            <LogOut className="size-4"/>Sair
+          </button>
         </div>
       </header>
 

@@ -12,14 +12,16 @@ export default function LoginPage() {
   async function doLogin(e: FormEvent) {
     e.preventDefault()
     await login(email, senha)
-    const role = useAuthStore.getState().role
+    const user = useAuthStore.getState().user
+    const role = user?.role
     const destino =
-    role === 'RESTAURANTE' ? '/restaurante/pedidos'
-    : role === 'ENTREGADOR'  ? '/entregador/pedidos'
-    : '/restaurantes'
+      role === 'ADMIN'       ? '/admin/usuarios' :
+      role === 'RESTAURANTE' ? '/restaurante/pedidos' :
+      role === 'ENTREGADOR'  ? '/entregador/pedidos' :
+                              '/restaurantes'
     nav(state?.from || destino, { replace: true })
-    }
-
+  }
+  
   return (
     <div className="app-shell grid place-items-center">
       <div className="login-bg" />

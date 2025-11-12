@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-500: oklch(0.72 0.14 254);
-  --color-brand-600: oklch(0.62 0.14 254);
-  --color-brand-700: oklch(0.54 0.13 254);
-  --color-ink-900:  oklch(0.18 0.01 250);
+  /* Paleta inspirada em restaurantes - tons quentes e apetitosos */
+  --color-brand-500: oklch(0.68 0.18 45);   /* Laranja/âmbar vibrante */
+  --color-brand-600: oklch(0.58 0.18 45);   /* Laranja médio */
+  --color-brand-700: oklch(0.48 0.16 45);   /* Laranja escuro */
+  --color-ink-900:  oklch(0.15 0.02 30);    /* Marrom escuro quente */
+  --color-accent: oklch(0.65 0.15 120);     /* Verde oliva suave */
 }
 
 :root { color-scheme: dark; }
@@ -21,11 +23,27 @@ select.input,
 select.input option {
   @apply bg-ink-900 text-white;
 }
-/* Fundo animado para a tela de login (gradiente orgânico) */
+
+/* Fundo animado para a tela de login - tema de restaurante */
 .login-bg {
-  position: fixed; inset: 0; overflow: hidden; pointer-events: none;
-  background: radial-gradient(60vmax 60vmax at 10% 20%, color(display-p3 0.22 0.28 0.96) 0%, transparent 60%),
-              radial-gradient(60vmax 60vmax at 80% 10%, color(display-p3 0.02 0.02 0.10) 0%, transparent 50%),
-              radial-gradient(60vmax 60vmax at 90% 80%, color(display-p3 0.18 0.14 0.70) 0%, transparent 50%);
-  filter: blur(40px) saturate(120%);
+  position: fixed; 
+  inset: 0; 
+  overflow: hidden; 
+  pointer-events: none;
+  /* Gradientes inspirados em comida: laranja (queijo/cítricos), vermelho (tomate/molho), âmbar (especiarias) */
+  background: 
+    radial-gradient(60vmax 60vmax at 15% 25%, color(display-p3 0.85 0.45 0.15) 0%, transparent 55%),
+    radial-gradient(55vmax 55vmax at 85% 15%, color(display-p3 0.95 0.35 0.20) 0%, transparent 50%),
+    radial-gradient(65vmax 65vmax at 50% 80%, color(display-p3 0.75 0.50 0.10) 0%, transparent 60%),
+    radial-gradient(50vmax 50vmax at 10% 70%, color(display-p3 0.65 0.25 0.15) 0%, transparent 45%);
+  filter: blur(50px) saturate(140%);
+  opacity: 0.9;
+}
+
+/* Adiciona um overlay sutil para melhorar legibilidade */
+.login-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
 }
