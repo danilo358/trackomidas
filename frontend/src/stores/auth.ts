@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export type Role = 'ADMIN'|'RESTAURANTE'|'ENTREGADOR'|'CLIENTE'
 export type User = { id: string; nome: string; role: Role }
-const API = import.meta.env.VITE_API ?? 'http://localhost:3333'
+const API = import.meta.env.VITE_API_URL ?? 'https://api.danilopaulo.com.br/'
 
 type State = {
   user?: User
