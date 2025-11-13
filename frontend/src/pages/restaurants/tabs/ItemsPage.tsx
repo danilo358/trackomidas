@@ -71,7 +71,7 @@ export default function ItemsPage(){
 
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {itens.map(i => (
-            <article key={i._id} className="card p-3 flex flex-col min-h-[340px] sm:min-h-[360px] lg:min-h-[380px]">
+            <article key={i._id} className="card p-3 flex flex-col min-h-[340px] sm:h-[360px] lg:h-[380px]">
               <div
                 className="relative w-full rounded-md overflow-hidden border border-white/10"
                 style={{ paddingTop: '100%' }}
